@@ -1,0 +1,396 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="stylesheet"
+      href="https://cdn-uicons.flaticon.com/2.0.0/uicons-regular-straight/css/uicons-regular-straight.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css"
+    />
+    <link rel="stylesheet" href="./assets/css/styles.css" />
+    <title>Browse Components | CBBS</title>
+    <style>
+      .product__item .product__actions {
+        display: none !important;
+      }
+      .product__item:hover .product__actions {
+        display: none !important;
+      }
+      .product__item .action__btn {
+        display: none !important;
+      }
+      .product__img {
+        width: 100%;
+        height: 200px;
+        object-fit: cover;
+        background: #f0f2f0;
+      }
+      .product__banner {
+        background: #f8faf8;
+        min-height: 200px;
+      }
+      .shop-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-bottom: 2rem;
+      }
+      .shop-header .total__products {
+        margin: 0;
+      }
+      .filter-group {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      .filter-group select {
+        padding: 0.5rem 1rem;
+        border: 1px solid #d9ded9;
+        border-radius: 6px;
+        font-family: inherit;
+        font-size: 0.9rem;
+        background: #fff;
+        color: #1a2634;
+        min-width: 160px;
+        cursor: pointer;
+      }
+      .filter-group select:focus {
+        border-color: #3f705f;
+        outline: none;
+      }
+      .filter-group .filter-btn {
+        padding: 0.5rem 1.5rem;
+        background: #3f705f;
+        color: #fff;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: background 0.2s;
+      }
+      .filter-group .filter-btn:hover {
+        background: #2f5a4c;
+      }
+      .filter-group .clear-btn {
+        background: #e2e8f0;
+        color: #2d3f5e;
+      }
+      .filter-group .clear-btn:hover {
+        background: #d0d7e0;
+      }
+      @media (max-width: 768px) {
+        .shop-header {
+          flex-direction: column;
+          align-items: stretch;
+        }
+        .filter-group {
+          flex-direction: column;
+        }
+        .filter-group select,
+        .filter-group button {
+          width: 100%;
+        }
+        .product__img {
+          height: 150px;
+        }
+        .product__banner {
+          min-height: 150px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="header">
+      <div id="header-placeholder">
+        <div style="background-color: var(--first-color-alt)"></div>
+      </div>
+    </header>
+    <hr />
+
+    <main class="main">
+      <section class="products container section--lg">
+        <div class="shop-header">
+          <p class="total__products">
+            Found <span id="productCount">0</span> components
+          </p>
+          <div class="filter-group">
+            <select id="filterName">
+              <option value="">Select Product Name</option>
+            </select>
+            <select id="filterCategory">
+              <option value="">Select Component Category</option>
+            </select>
+            <select id="filterPrice">
+              <option value="">Select Price Range</option>
+              <option value="0-500">R0 – R500</option>
+              <option value="500-1000">R500 – R1,000</option>
+              <option value="1000-2000">R1,000 – R2,000</option>
+              <option value="2000-5000">R2,000 – R5,000</option>
+              <option value="5000-99999">R5,000+</option>
+            </select>
+            <select id="filterSort">
+              <option value="">Sort Price By</option>
+              <option value="price-asc">Price: Lowest to Highest</option>
+              <option value="price-desc">Price: Highest to Lowest</option>
+            </select>
+            <button class="filter-btn" onclick="applyFilters()">
+              Apply Filters
+            </button>
+            <button class="filter-btn clear-btn" onclick="clearFilters()">
+              Clear
+            </button>
+          </div>
+        </div>
+
+        <div class="products__container grid" id="productsContainer">
+          <p
+            style="
+              text-align: center;
+              grid-column: 1/-1;
+              padding: 2rem;
+              color: #6c7a8a;
+            "
+          >
+            Loading components...
+          </p>
+        </div>
+
+        <ul class="pagination" id="paginationContainer">
+          <li>
+            <a href="#" class="pagination__link active" data-page="1">01</a>
+          </li>
+        </ul>
+      </section>
+    </main>
+    <hr />
+
+    <div id="footer-placeholder"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+    <script src="assets/js/main.js"></script>
+    <script src="assets/js/auth.js"></script>
+    <script src="assets/js/load-components.js"></script>
+
+    <script>
+      //This page shows the components that are available
+      // Use the  backend URL
+      const API_BASE = "https://custom-bicycle-system-backend.onrender.com/api";
+      const token = localStorage.getItem("token");
+      let allComponents = [];
+      let filteredComponents = [];
+      const itemsPerPage = 12;
+      let currentPage = 1;
+
+      function fetchWithAuth(endpoint) {
+        return fetch(`${API_BASE}${endpoint}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }).then((res) => {
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          return res.json();
+        });
+      }
+
+      function getImageUrl(comp) {
+        if (comp.image_url && comp.image_url.startsWith("http")) {
+          return comp.image_url;
+        } else if (comp.image_url) {
+          return `https://custom-bicycle-system-backend.onrender.com${comp.image_url}`;
+        }
+        return null;
+      }
+
+      function createProductCard(comp) {
+        const imgUrl = getImageUrl(comp);
+        return `
+          <div class="product__item">
+            <div class="product__banner">
+              <a href="details.html?id=${comp.id}" class="product__images">
+                <img
+                  src="${imgUrl || "assets/img/product-placeholder.jpg"}"
+                  alt="${comp.name}"
+                  class="product__img default"
+                  loading="lazy"
+                  onerror="this.src='assets/img/product-placeholder.jpg'"
+                />
+                <img
+                  src="${imgUrl || "assets/img/product-placeholder.jpg"}"
+                  alt="${comp.name}"
+                  class="product__img hover"
+                  loading="lazy"
+                  onerror="this.src='assets/img/product-placeholder.jpg'"
+                />
+              </a>
+              <div class="product__badge ${comp.stockQuantity > 0 ? "light-green" : "light-pink"}">
+                ${comp.stockQuantity > 0 ? "In Stock" : "Out of Stock"}
+              </div>
+            </div>
+            <div class="product__content">
+              <span class="product__category">${comp.category || "Uncategorized"}</span>
+              <a href="details.html?id=${comp.id}">
+                <h3 class="product__title">${comp.name}</h3>
+              </a>
+              <div class="product__price flex">
+                <span class="new__price">R${Number(comp.unitPrice).toFixed(2)}</span>
+              </div>
+              <a href="#" class="action__btn cart__btn" aria-label="Add To Cart">
+                <i class="fi fi-rs-shopping-bag-add"></i>
+              </a>
+            </div>
+          </div>
+        `;
+      }
+
+      function populateFilters(components) {
+        // Populate Name dropdown
+        const nameSelect = document.getElementById("filterName");
+        const names = [
+          ...new Set(components.map((c) => c.name).filter(Boolean)),
+        ];
+        names.sort();
+        names.forEach((name) => {
+          const option = document.createElement("option");
+          option.value = name;
+          option.textContent = name;
+          nameSelect.appendChild(option);
+        });
+
+        // Populate Category dropdown
+        const catSelect = document.getElementById("filterCategory");
+        const categories = [
+          ...new Set(components.map((c) => c.category).filter(Boolean)),
+        ];
+        categories.sort();
+        categories.forEach((cat) => {
+          const option = document.createElement("option");
+          option.value = cat;
+          option.textContent = cat;
+          catSelect.appendChild(option);
+        });
+      }
+
+      function applyFilters() {
+        const name = document.getElementById("filterName").value;
+        const category = document.getElementById("filterCategory").value;
+        const priceRange = document.getElementById("filterPrice").value;
+        const sort = document.getElementById("filterSort").value;
+
+        filteredComponents = allComponents.filter((comp) => {
+          let match = true;
+
+          if (name) {
+            match = match && comp.name === name;
+          }
+          if (category) {
+            match = match && comp.category === category;
+          }
+          if (priceRange) {
+            const [min, max] = priceRange.split("-").map(Number);
+            const price = Number(comp.unitPrice);
+            if (max === 99999) {
+              match = match && price >= min;
+            } else {
+              match = match && price >= min && price <= max;
+            }
+          }
+          return match;
+        });
+
+        if (sort === "price-asc") {
+          filteredComponents.sort(
+            (a, b) => Number(a.unitPrice) - Number(b.unitPrice),
+          );
+        } else if (sort === "price-desc") {
+          filteredComponents.sort(
+            (a, b) => Number(b.unitPrice) - Number(a.unitPrice),
+          );
+        }
+
+        currentPage = 1;
+        renderPage(currentPage);
+        document.getElementById("productCount").textContent =
+          filteredComponents.length;
+      }
+
+      function clearFilters() {
+        document.getElementById("filterName").value = "";
+        document.getElementById("filterCategory").value = "";
+        document.getElementById("filterPrice").value = "";
+        document.getElementById("filterSort").value = "";
+        applyFilters();
+      }
+
+      function renderPage(page) {
+        const container = document.getElementById("productsContainer");
+        const start = (page - 1) * itemsPerPage;
+        const end = start + itemsPerPage;
+        const pageItems = filteredComponents.slice(start, end);
+
+        if (pageItems.length === 0) {
+          container.innerHTML = `<p style="text-align:center;grid-column:1/-1;padding:2rem;color:#6c7a8a;">No components found.</p>`;
+        } else {
+          container.innerHTML = pageItems.map(createProductCard).join("");
+        }
+
+        renderPagination(page);
+      }
+
+      function renderPagination(currentPage) {
+        const totalPages = Math.ceil(filteredComponents.length / itemsPerPage);
+        const container = document.getElementById("paginationContainer");
+
+        if (totalPages <= 1) {
+          container.innerHTML = `<li><a href="#" class="pagination__link active" data-page="1">01</a></li>`;
+          return;
+        }
+
+        let html = "";
+        for (let i = 1; i <= Math.min(totalPages, 10); i++) {
+          const active = i === currentPage ? "active" : "";
+          html += `<li><a href="#" class="pagination__link ${active}" data-page="${i}" onclick="changePage(${i})">${String(i).padStart(2, "0")}</a></li>`;
+        }
+        if (totalPages > 10) {
+          html += `<li><span>...</span></li>`;
+          html += `<li><a href="#" class="pagination__link" data-page="${totalPages}" onclick="changePage(${totalPages})">${String(totalPages).padStart(2, "0")}</a></li>`;
+        }
+        container.innerHTML = html;
+      }
+
+      function changePage(page) {
+        currentPage = page;
+        renderPage(page);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+
+      function loadShop() {
+        const container = document.getElementById("productsContainer");
+
+        fetchWithAuth("/components")
+          .then((components) => {
+            allComponents = components;
+            filteredComponents = [...components];
+            document.getElementById("productCount").textContent =
+              components.length;
+            populateFilters(components);
+            renderPage(1);
+          })
+          .catch((error) => {
+            console.error("Error loading components:", error);
+            container.innerHTML = `
+              <p style="text-align:center;grid-column:1/-1;padding:2rem;color:#dc3545;">
+                Failed to load components. Make sure backend is running.
+              </p>
+            `;
+          });
+      }
+
+      document.addEventListener("DOMContentLoaded", loadShop);
+    </script>
+  </body>
+</html>

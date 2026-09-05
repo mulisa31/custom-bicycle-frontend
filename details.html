@@ -1,0 +1,361 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="stylesheet"
+      href="https://cdn-uicons.flaticon.com/2.0.0/uicons-regular-straight/css/uicons-regular-straight.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css"
+    />
+    <link rel="stylesheet" href="./assets/css/styles.css" />
+    <title>Product Details | CBBS</title>
+    <style>
+      .product__item .product__actions {
+        display: none !important;
+      }
+      .product__item:hover .product__actions {
+        display: none !important;
+      }
+      .product__item .action__btn {
+        display: none !important;
+      }
+      .product__img {
+        width: 100%;
+        height: 200px;
+        object-fit: cover;
+        background: #f0f2f0;
+      }
+      .product__banner {
+        background: #f8faf8;
+        min-height: 200px;
+      }
+      .details__img {
+        width: 100%;
+        max-height: 500px;
+        object-fit: contain;
+        background: #f8faf8;
+        border-radius: 8px;
+      }
+      .product__badge {
+        font-size: 0.75rem;
+        font-weight: 600;
+      }
+      .light-green {
+        background: #d4edda;
+        color: #155724;
+      }
+      .light-pink {
+        background: #f8d7da;
+        color: #721c24;
+      }
+      .light-orange {
+        background: #fff3cd;
+        color: #856404;
+      }
+      .light-blue {
+        background: #cce5ff;
+        color: #004085;
+      }
+      .products__container .product__item .product__images .hover {
+        display: none !important;
+      }
+      .products__container .product__item .product__images:hover .hover {
+        display: none !important;
+      }
+      .products__container .product__item .product__images .default {
+        display: block !important;
+      }
+      .products__container .product__item .product__images:hover .default {
+        display: block !important;
+      }
+      .details__container .product__images .hover {
+        display: none !important;
+      }
+      .details__container .product__images:hover .hover {
+        display: none !important;
+      }
+      .details__container .product__images .default {
+        display: block !important;
+      }
+      .details__container .product__images:hover .default {
+        display: block !important;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="header">
+      <div id="header-placeholder">
+        <div style="background-color: var(--first-color-alt)"></div>
+      </div>
+    </header>
+    <hr />
+
+    <main class="main">
+      <section class="details section--lg">
+        <div
+          class="details__container container grid"
+          style="border-bottom: 1px solid var(--border-color-alt)"
+          id="detailsContainer"
+        >
+          <div class="details__group">
+            <img
+              src="./assets/img/product-8-1.jpg"
+              alt=""
+              class="details__img"
+              id="productImage"
+            />
+          </div>
+          <div class="details__group">
+            <h3 class="details__title" id="productName">Loading...</h3>
+            <p class="details__brand">
+              Category: <span id="productCategory">-</span>
+            </p>
+            <div class="details__price flex">
+              <span class="new__price" id="productPrice">-</span>
+            </div>
+            <p class="short__description" id="productDescription">
+              Loading description...
+            </p>
+            <ul class="products__list">
+              <li class="list__item flex">
+                <i class="fi-rs-refresh"></i> 30 Days Return Policy
+              </li>
+            </ul>
+            <div class="details__action" style="display: none">
+              <input
+                type="number"
+                class="quantity"
+                value="1"
+                min="1"
+                id="productQuantity"
+              />
+              <a href="#" class="btn btn--sm" id="addToCartBtn">Add To Cart</a>
+            </div>
+            <div
+              id="lblResponse"
+              style="margin-top: 10px; font-weight: 600; min-height: 24px"
+            ></div>
+            <ul class="details__meta">
+              <li class="meta__list flex">
+                <span>Stock Quantity:</span> <span id="productStock">-</span>
+              </li>
+              <li class="meta__list flex">
+                <span>Product ID:</span> <span id="productId">-</span>
+              </li>
+            </ul>
+          </div>
+          <br />
+        </div>
+      </section>
+
+      <section
+        class="products container section--lg"
+        style="padding-top: 0 !important"
+      >
+        <h3 class="section__title"><span>Related</span> Products</h3>
+        <div class="products__container grid" id="relatedProducts">
+          <p
+            style="
+              text-align: center;
+              grid-column: 1/-1;
+              padding: 2rem;
+              color: #6c7a8a;
+            "
+          >
+            Loading related products...
+          </p>
+        </div>
+      </section>
+    </main>
+    <hr />
+
+    <div id="footer-placeholder"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+    <script src="assets/js/main.js"></script>
+    <script src="assets/js/auth.js"></script>
+    <script src="assets/js/load-components.js"></script>
+
+    <script>
+      //  backend API
+      const API_BASE = "https://custom-bicycle-system-backend.onrender.com/api";
+      const token = localStorage.getItem("token");
+      let currentUser = JSON.parse(localStorage.getItem("user") || "{}");
+
+      // helper to get a query string param from the URL
+      function getQueryParam(param) {
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get(param);
+      }
+
+      // fetch wrapper with token
+      function fetchWithAuth(endpoint, options = {}) {
+        return fetch(`${API_BASE}${endpoint}`, {
+          ...options,
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+            ...options.headers,
+          },
+        }).then((res) => {
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          return res.json();
+        });
+      }
+
+      // get image url from component
+      function getImageUrl(comp) {
+        if (comp.image_url && comp.image_url.startsWith("http")) {
+          return comp.image_url;
+        } else if (comp.image_url) {
+          return `https://custom-bicycle-system-backend.onrender.com${comp.image_url}`;
+        }
+        return null;
+      }
+
+      // show small message under the product
+      function showToast(message, type = "success") {
+        const lbl = document.getElementById("lblResponse");
+        if (lbl) {
+          lbl.textContent = message;
+          lbl.style.color =
+            type === "success"
+              ? "#28a745"
+              : type === "error"
+                ? "#dc3545"
+                : "#17a2b8";
+          lbl.style.display = "block";
+          setTimeout(() => {
+            lbl.style.display = "none";
+          }, 4000);
+        }
+      }
+
+      // load the product details for the id in query string
+      function loadProductDetails() {
+        const id = getQueryParam("id");
+
+        if (!id) {
+          document.getElementById("detailsContainer").innerHTML = `
+            <p style="text-align:center;grid-column:1/-1;padding:2rem;color:#dc3545;">
+              Product ID not found.
+            </p>
+          `;
+          return;
+        }
+
+        fetchWithAuth(`/components/${id}`).then((comp) => {
+          document.getElementById("productName").textContent = comp.name;
+          document.getElementById("productCategory").textContent =
+            comp.category || "Uncategorized";
+          document.getElementById("productPrice").textContent =
+            `R${Number(comp.unitPrice).toFixed(2)}`;
+          document.getElementById("productDescription").textContent =
+            comp.description || "No description available.";
+          document.getElementById("productStock").textContent =
+            comp.stockQuantity > 0
+              ? `${comp.stockQuantity} items in stock`
+              : "Out of stock";
+          document.getElementById("productId").textContent = comp.id;
+
+          const img = document.getElementById("productImage");
+          const imgUrl = getImageUrl(comp);
+          if (imgUrl) {
+            img.src = imgUrl;
+            img.onerror = () => {
+              img.src = "assets/img/product-placeholder.jpg";
+            };
+          } else {
+            img.src = "assets/img/product-placeholder.jpg";
+          }
+
+          loadRelatedProducts(comp.category, comp.id);
+        });
+      }
+
+      // load related products from same category
+      function loadRelatedProducts(category, excludeId) {
+        const container = document.getElementById("relatedProducts");
+
+        if (!category) {
+          container.innerHTML =
+            '<p style="text-align:center;grid-column:1/-1;padding:2rem;color:#6c7a8a;">No related products available.</p>';
+          return;
+        }
+
+        fetchWithAuth("/components")
+          .then((components) => {
+            const related = components
+              .filter(
+                (c) => c.category === category && c.id !== Number(excludeId),
+              )
+              .slice(0, 4);
+
+            if (related.length === 0) {
+              container.innerHTML =
+                '<p style="text-align:center;grid-column:1/-1;padding:2rem;color:#6c7a8a;">No related products found.</p>';
+              return;
+            }
+
+            container.innerHTML = related.map(createProductCard).join("");
+          })
+          .catch((error) => {
+            console.error("Error loading related products:", error);
+            container.innerHTML = `
+              <p style="text-align:center;grid-column:1/-1;padding:2rem;color:#dc3545;">
+                Failed to load related products.
+              </p>
+            `;
+          });
+      }
+
+      // build a product card for related items
+      function createProductCard(comp) {
+        const imgUrl = getImageUrl(comp);
+        const badgeClass =
+          comp.stockQuantity > 0 ? "light-green" : "light-pink";
+        const badgeText = comp.stockQuantity > 0 ? "In Stock" : "Out of Stock";
+        return `
+          <div class="product__item">
+            <div class="product__banner">
+              <a href="details.html?id=${comp.id}" class="product__images">
+                <img
+                  src="${imgUrl || "assets/img/product-placeholder.jpg"}"
+                  alt="${comp.name}"
+                  class="product__img default"
+                  loading="lazy"
+                  onerror="this.src='assets/img/product-placeholder.jpg'"
+                />
+                <img
+                  src="${imgUrl || "assets/img/product-placeholder.jpg"}"
+                  alt="${comp.name}"
+                  class="product__img hover"
+                  loading="lazy"
+                  onerror="this.src='assets/img/product-placeholder.jpg'"
+                />
+              </a>
+              <div class="product__badge ${badgeClass}">${badgeText}</div>
+            </div>
+            <div class="product__content">
+              <span class="product__category">${comp.category || "Uncategorized"}</span>
+              <a href="details.html?id=${comp.id}">
+                <h3 class="product__title">${comp.name}</h3>
+              </a>
+              <div class="product__price flex">
+                <span class="new__price">R${Number(comp.unitPrice).toFixed(2)}</span>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      document.addEventListener("DOMContentLoaded", function () {
+        loadProductDetails();
+      });
+    </script>
+  </body>
+</html>

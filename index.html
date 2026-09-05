@@ -1,0 +1,555 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="stylesheet"
+      href="https://cdn-uicons.flaticon.com/2.0.0/uicons-regular-straight/css/uicons-regular-straight.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css"
+    />
+    <link rel="stylesheet" href="assets/css/styles.css" />
+    <title>HOME | CBBS</title>
+    <style>
+      .section-divider {
+        border: none;
+        border-top: 2px solid #e8ede8;
+        margin: 0 auto;
+        max-width: 1200px;
+        padding: 0 1.5rem;
+      }
+      .section-divider hr {
+        border: none;
+        border-top: 2px solid #e8ede8;
+        margin: 0;
+      }
+      .cb-section {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 3rem 1.5rem;
+      }
+      .cb-section-heading {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-bottom: 2rem;
+      }
+      .cb-section-heading-left span {
+        display: inline-block;
+        font-size: 0.75rem;
+        font-weight: 600;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        color: #3f705f;
+        background: #eaf3ef;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        margin-bottom: 0.5rem;
+      }
+      .cb-section-heading-left h2 {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: #1a2634;
+        margin: 0;
+      }
+      .cb-view-all {
+        color: #3f705f;
+        font-weight: 600;
+        text-decoration: none;
+        font-size: 0.95rem;
+        transition: color 0.2s;
+        white-space: nowrap;
+      }
+      .cb-view-all:hover {
+        color: #2a4d40;
+        text-decoration: underline;
+      }
+      .product__item .product__actions {
+        display: none !important;
+      }
+      .product__item:hover .product__actions {
+        display: none !important;
+      }
+      .product__item .action__btn {
+        display: none !important;
+      }
+      .swiper-slide {
+        height: auto;
+      }
+      .product__item {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+      }
+      .product__content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+      }
+      .product__images .hover {
+        display: none !important;
+      }
+      .product__images:hover .hover {
+        display: none !important;
+      }
+      .product__images .default {
+        display: block !important;
+      }
+      .product__images:hover .default {
+        display: block !important;
+      }
+      .product__img {
+        width: 100%;
+        height: 200px;
+        object-fit: cover;
+        background: #f0f2f0;
+      }
+      .product__banner {
+        background: #f8faf8;
+        min-height: 200px;
+      }
+      @media (max-width: 768px) {
+        .cb-section-heading {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+        .product__img {
+          height: 150px;
+        }
+        .product__banner {
+          min-height: 150px;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <header class="header">
+      <div id="header-placeholder">
+        <div style="background-color: var(--first-color-alt)"></div>
+      </div>
+    </header>
+
+    <hr />
+
+    <main class="main">
+      <section class="home section--lg">
+        <div class="home__container container grid">
+          <div class="home__content" style="transform: translateY(-5vh)">
+            <span class="home__subtitle">Custom Build Your Dream Bike</span>
+            <h1 class="home__title">Build Your <span>Perfect Bicycle</span></h1>
+            <p class="home__description">
+              Choose your frame, wheels, brakes, gears and more. Our system
+              checks compatibility and stock so you can create a bicycle that's
+              made for you.
+            </p>
+            <a href="build-your-bicycle.html" class="btn">Start Building</a>
+            <a href="shop.html" class="btn">Browse Components</a>
+          </div>
+          <img
+            src="assets/img/home-img.jpg"
+            class="home__img"
+            style="max-width: 65%"
+            alt="bicycle"
+          />
+        </div>
+      </section>
+
+      <div class="section-divider"><hr /></div>
+
+      <section class="cb-section" id="recommendedSection">
+        <div class="cb-section-heading">
+          <div class="cb-section-heading-left">
+            <span>Personalized</span>
+            <h2>Recommended For You</h2>
+          </div>
+        </div>
+        <div class="new__container swiper">
+          <div class="swiper-wrapper" id="recommendedForYou"></div>
+          <div class="swiper-button-prev">
+            <i class="fi fi-rs-angle-left"></i>
+          </div>
+          <div class="swiper-button-next">
+            <i class="fi fi-rs-angle-right"></i>
+          </div>
+        </div>
+      </section>
+
+      <div class="section-divider"><hr /></div>
+
+      <section class="cb-section">
+        <div class="cb-section-heading">
+          <div class="cb-section-heading-left">
+            <span>Shop Components</span>
+            <h2>Popular Components</h2>
+          </div>
+        </div>
+        <div class="new__container swiper">
+          <div class="swiper-wrapper" id="popularComponents"></div>
+          <div class="swiper-button-prev">
+            <i class="fi fi-rs-angle-left"></i>
+          </div>
+          <div class="swiper-button-next">
+            <i class="fi fi-rs-angle-right"></i>
+          </div>
+        </div>
+      </section>
+
+      <div class="section-divider"><hr /></div>
+
+      <section class="new__arrivals container section">
+        <h3 class="section__title"><span>New</span> Arrivals</h3>
+        <div class="new__container swiper">
+          <div class="swiper-wrapper" id="newArrivalsWrapper"></div>
+          <div class="swiper-button-prev">
+            <i class="fi fi-rs-angle-left"></i>
+          </div>
+          <div class="swiper-button-next">
+            <i class="fi fi-rs-angle-right"></i>
+          </div>
+        </div>
+      </section>
+
+      <div class="section-divider"><hr /></div>
+
+      <section class="section container" style="padding: 3rem 0">
+        <div class="how-to-order" style="text-align: center">
+          <h3 class="section__title" style="margin-bottom: 2rem">
+            <span>How</span> to Order
+          </h3>
+          <div
+            style="
+              display: grid;
+              grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+              gap: 2rem;
+              max-width: 1000px;
+              margin: 0 auto;
+            "
+          >
+            <div
+              style="
+                background: #f8fafc;
+                padding: 2rem 1.5rem;
+                border-radius: 10px;
+                border: 1px solid #e2e8f0;
+              "
+            >
+              <div
+                style="font-size: 2.5rem; color: #3f705f; margin-bottom: 1rem"
+              >
+                1
+              </div>
+              <h4 style="font-size: 1.1rem; color: #1a2634">
+                Browse Components
+              </h4>
+              <p style="font-size: 0.9rem; color: #6c7a8a; margin-top: 0.5rem">
+                Explore our wide range of premium bicycle parts and choose what
+                fits your build.
+              </p>
+            </div>
+            <div
+              style="
+                background: #f8fafc;
+                padding: 2rem 1.5rem;
+                border-radius: 10px;
+                border: 1px solid #e2e8f0;
+              "
+            >
+              <div
+                style="font-size: 2.5rem; color: #3f705f; margin-bottom: 1rem"
+              >
+                2
+              </div>
+              <h4 style="font-size: 1.1rem; color: #1a2634">Custom Build</h4>
+              <p style="font-size: 0.9rem; color: #6c7a8a; margin-top: 0.5rem">
+                Select your components, check compatibility, and design your
+                dream bicycle.
+              </p>
+            </div>
+            <div
+              style="
+                background: #f8fafc;
+                padding: 2rem 1.5rem;
+                border-radius: 10px;
+                border: 1px solid #e2e8f0;
+              "
+            >
+              <div
+                style="font-size: 2.5rem; color: #3f705f; margin-bottom: 1rem"
+              >
+                3
+              </div>
+              <h4 style="font-size: 1.1rem; color: #1a2634">Place Order</h4>
+              <p style="font-size: 0.9rem; color: #6c7a8a; margin-top: 0.5rem">
+                Submit your order and our team will assemble your bicycle with
+                precision.
+              </p>
+            </div>
+            <div
+              style="
+                background: #f8fafc;
+                padding: 2rem 1.5rem;
+                border-radius: 10px;
+                border: 1px solid #e2e8f0;
+              "
+            >
+              <div
+                style="font-size: 2.5rem; color: #3f705f; margin-bottom: 1rem"
+              >
+                4
+              </div>
+              <h4 style="font-size: 1.1rem; color: #1a2634">Enjoy Your Ride</h4>
+              <p style="font-size: 0.9rem; color: #6c7a8a; margin-top: 0.5rem">
+                Receive your custom-built bicycle and hit the road with
+                confidence.
+              </p>
+            </div>
+          </div>
+          <a
+            href="build-your-bicycle.html"
+            class="btn"
+            style="margin-top: 2rem; display: inline-block"
+            >Start Building Now</a
+          >
+        </div>
+      </section>
+    </main>
+
+    <hr />
+
+    <div id="footer-placeholder"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+    <script src="assets/js/main.js"></script>
+    <script src="assets/js/auth.js"></script>
+    <script src="assets/js/load-components.js"></script>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        // backend URL
+        const API_BASE =
+          "https://custom-bicycle-system-backend.onrender.com/api";
+        const token = localStorage.getItem("token");
+        const user = JSON.parse(localStorage.getItem("user") || "{}");
+
+        // wrapper for fetch with auth header
+        function fetchWithAuth(endpoint) {
+          return fetch(`${API_BASE}${endpoint}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }).then((res) => {
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            return res.json();
+          });
+        }
+
+        // return  cloudinary full url (image's url)
+        function getImageUrl(comp) {
+          if (comp.image_url && comp.image_url.startsWith("http")) {
+            return comp.image_url;
+          } else if (comp.image_url) {
+            return `https://custom-bicycle-system-backend.onrender.com${comp.image_url}`;
+          }
+          return null;
+        }
+
+        // build a product card html
+        function createProductCard(comp) {
+          const imgUrl = getImageUrl(comp);
+
+          return `
+            <div class="product__item swiper-slide">
+              <div class="product__banner">
+                <a href="details.html?id=${comp.id}" class="product__images">
+                  <img
+                    src="${imgUrl || "assets/img/product-placeholder.jpg"}"
+                    alt="${comp.name}"
+                    class="product__img default"
+                    loading="lazy"
+                    onerror="this.src='assets/img/product-placeholder.jpg'"
+                  />
+                  <img
+                    src="${imgUrl || "assets/img/product-placeholder.jpg"}"
+                    alt="${comp.name}"
+                    class="product__img hover"
+                    loading="lazy"
+                    onerror="this.src='assets/img/product-placeholder.jpg'"
+                  />
+                </a>
+                <div class="product__badge ${comp.stockQuantity > 0 ? "light-green" : "light-pink"}">
+                  ${comp.stockQuantity > 0 ? "In Stock" : "Out of Stock"}
+                </div>
+              </div>
+              <div class="product__content">
+                <span class="product__category">${comp.category}</span>
+                <a href="details.html?id=${comp.id}">
+                  <h3 class="product__title">${comp.name}</h3>
+                </a>
+                <div class="product__price flex">
+                  <span class="new__price">R${Number(comp.unitPrice).toFixed(2)}</span>
+                </div>
+                <a href="#" class="action__btn cart__btn" aria-label="Add To Cart">
+                  <i class="fi fi-rs-shopping-bag-add"></i>
+                </a>
+              </div>
+            </div>
+          `;
+        }
+
+        // initialize swiper for a container
+        function initSwiper(containerSelector, nextSelector, prevSelector) {
+          return new Swiper(containerSelector, {
+            slidesPerView: 1,
+            spaceBetween: 20,
+            navigation: {
+              nextEl: nextSelector,
+              prevEl: prevSelector,
+            },
+            breakpoints: {
+              576: { slidesPerView: 2 },
+              768: { slidesPerView: 3 },
+              992: { slidesPerView: 4 },
+            },
+          });
+        }
+
+        // load personalized recommendations
+        async function loadRecommendations() {
+          const container = document.getElementById("recommendedForYou");
+
+          if (!token) {
+            container.innerHTML = `
+              <div class="swiper-slide" style="text-align:center;padding:2rem;color:#6c7a8a;">
+                <p>Login to see personalized recommendations.</p>
+              </div>
+            `;
+            return;
+          }
+
+          try {
+            const res = await fetch(`${API_BASE}/recommendations`, {
+              headers: { Authorization: `Bearer ${token}` },
+            });
+
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+            const components = await res.json();
+            const recs = components.slice(0, 4);
+
+            if (recs.length === 0) {
+              container.innerHTML = `
+                <div class="swiper-slide" style="text-align:center;padding:2rem;color:#6c7a8a;">
+                  <p>${user.preference ? "No recommendations available yet." : "Set your bike preference to get recommendations."}</p>
+                </div>
+              `;
+              return;
+            }
+
+            container.innerHTML = recs.map(createProductCard).join("");
+
+            if (window.swiperRecommended)
+              window.swiperRecommended.destroy(true, true);
+            window.swiperRecommended = initSwiper(
+              "#recommendedSection .new__container",
+              "#recommendedSection .swiper-button-next",
+              "#recommendedSection .swiper-button-prev",
+            );
+          } catch (error) {
+            console.error("Error loading recommendations:", error);
+            container.innerHTML = `
+              <div class="swiper-slide" style="text-align:center;padding:2rem;color:#dc3545;">
+                <p> Failed to load recommendations</p>
+              </div>
+            `;
+          }
+        }
+
+        // load popular components (random selection)
+        function loadPopularComponents() {
+          const container = document.getElementById("popularComponents");
+
+          fetchWithAuth("/components")
+            .then((components) => {
+              const shuffled = components.sort(() => 0.5 - Math.random());
+              const popular = shuffled.slice(0, 4);
+
+              if (popular.length === 0) {
+                container.innerHTML = `
+                  <div class="swiper-slide" style="text-align:center;padding:2rem;">
+                    No components available
+                  </div>
+                `;
+                return;
+              }
+
+              container.innerHTML = popular.map(createProductCard).join("");
+
+              if (window.swiperPopular)
+                window.swiperPopular.destroy(true, true);
+              window.swiperPopular = initSwiper(
+                ".cb-section .new__container",
+                ".cb-section .swiper-button-next",
+                ".cb-section .swiper-button-prev",
+              );
+            })
+            .catch((error) => {
+              console.error("Error loading popular components:", error);
+              container.innerHTML = `
+                <div class="swiper-slide" style="text-align:center;padding:2rem;color:#dc3545;">
+                    Failed to load popular components
+                </div>
+              `;
+            });
+        }
+
+        // load latest components (new arrivals)
+        function loadNewArrivals() {
+          const wrapper = document.getElementById("newArrivalsWrapper");
+
+          fetchWithAuth("/components")
+            .then((components) => {
+              const sorted = components.sort(
+                (a, b) => new Date(b.createdAt) - new Date(a.createdAt),
+              );
+              const latest = sorted.slice(0, 8);
+
+              if (latest.length === 0) {
+                wrapper.innerHTML = `
+                  <div class="swiper-slide" style="text-align:center;padding:2rem;">
+                    No components available
+                  </div>
+                `;
+                return;
+              }
+
+              wrapper.innerHTML = latest.map(createProductCard).join("");
+
+              if (window.swiperNewArrivals)
+                window.swiperNewArrivals.destroy(true, true);
+              window.swiperNewArrivals = initSwiper(
+                ".new__arrivals .new__container",
+                ".new__arrivals .swiper-button-next",
+                ".new__arrivals .swiper-button-prev",
+              );
+            })
+            .catch((error) => {
+              console.error("Error loading new arrivals:", error);
+              wrapper.innerHTML = `
+                <div class="swiper-slide" style="text-align:center;padding:2rem;color:#dc3545;">
+                   Failed to load new arrivals
+                </div>
+              `;
+            });
+        }
+
+        loadRecommendations();
+        loadPopularComponents();
+        loadNewArrivals();
+      });
+    </script>
+  </body>
+</html>

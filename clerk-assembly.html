@@ -1,0 +1,354 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Assembly Queue | CBBS</title>
+    <link rel="stylesheet" href="assets/css/styles.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+    />
+    <style>
+      .assembly-container {
+        max-width: 1000px;
+        margin: 2rem auto;
+        padding: 0 1.5rem;
+      }
+      .page-header {
+        margin-bottom: 1.5rem;
+      }
+      .page-header h1 {
+        font-size: 1.8rem;
+        color: #1a2634;
+        margin: 0;
+      }
+      .table-wrap {
+        background: #fff;
+        border-radius: 10px;
+        border: 1px solid #e2e8f0;
+        overflow-x: auto;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.9rem;
+      }
+      th,
+      td {
+        padding: 0.8rem 1rem;
+        text-align: left;
+        border-bottom: 1px solid #edf2f7;
+      }
+      th {
+        background: #f8fafc;
+        font-weight: 600;
+        color: #2d3f5e;
+      }
+      .btn-complete {
+        background: #3f705f;
+        color: #fff;
+        border: none;
+        padding: 0.4rem 1rem;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.85rem;
+        font-weight: 600;
+        transition: background 0.2s;
+      }
+      .btn-complete:hover {
+        background: #2f5a4c;
+      }
+      .btn-view {
+        background: #cce5ff;
+        color: #004085;
+        border: none;
+        padding: 0.4rem 0.8rem;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.8rem;
+        font-weight: 600;
+        transition: background 0.2s;
+        text-decoration: none;
+        display: inline-block;
+        margin-right: 0.5rem;
+      }
+      .btn-view:hover {
+        background: #b3d9ff;
+      }
+      .message {
+        padding: 10px 14px;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 500;
+        display: none;
+        margin-bottom: 15px;
+      }
+      .message.success {
+        display: block;
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+      }
+      .message.error {
+        display: block;
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+      }
+      .loading {
+        text-align: center;
+        color: #6c7a8a;
+        padding: 2rem;
+      }
+      .hidden {
+        display: none !important;
+      }
+      /* Modal styles */
+      .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 999;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      .modal-box {
+        background: #fff;
+        padding: 25px;
+        border-radius: 10px;
+        max-width: 500px;
+        width: 90%;
+        max-height: 80vh;
+        overflow-y: auto;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+      }
+      .modal-box h3 {
+        margin: 0 0 15px 0;
+        color: #1a2634;
+      }
+      .modal-box table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.9rem;
+      }
+      .modal-box table th,
+      .modal-box table td {
+        padding: 8px;
+        text-align: left;
+        border-bottom: 1px solid #f0f2f5;
+      }
+      .modal-box table th {
+        background: #f8fafc;
+        font-weight: 600;
+        color: #2d3f5e;
+      }
+      .modal-close {
+        margin-top: 15px;
+        text-align: right;
+      }
+      .modal-close button {
+        padding: 8px 20px;
+        background: #3f705f;
+        color: #fff;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-family: inherit;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="header">
+      <div id="header-placeholder"></div>
+    </header>
+    <hr />
+
+    <main>
+      <div class="assembly-container">
+        <div class="page-header">
+          <h1>Assembly Queue</h1>
+        </div>
+
+        <div id="assemblyMessage" class="message"></div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Order ID</th>
+                <th>Items</th>
+                <th>Total</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="assemblyBody">
+              <tr>
+                <td colspan="4" class="loading">
+                  <i class="fas fa-spinner fa-spin"></i> Loading...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <hr />
+    </main>
+
+    <div id="footer-placeholder"></div>
+
+    <!-- Items Modal -->
+    <div id="itemsModal" class="modal-overlay hidden">
+      <div class="modal-box">
+        <h3 id="modalTitle">Order Items</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Category</th>
+              <th>Component</th>
+            </tr>
+          </thead>
+          <tbody id="modalItemsBody"></tbody>
+        </table>
+        <div class="modal-close">
+          <button onclick="closeItemsModal()">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="assets/js/load-components.js"></script>
+    <script>
+      // Base URL for the API
+      const API_BASE = "https://custom-bicycle-system-backend.onrender.com/api";
+      const token = localStorage.getItem("token");
+      const user = JSON.parse(localStorage.getItem("user") || "null");
+
+      // Only clerks can use this page
+      if (!token || !user || user.role !== "clerk") {
+        window.location.href = "login.html";
+      }
+
+      // We'll keep a list of orders that are being assembled
+      let assemblingOrders = [];
+
+      // Fetch wrapper that adds the token header
+      function fetchWithAuth(endpoint, options = {}) {
+        return fetch(`${API_BASE}${endpoint}`, {
+          ...options,
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+            ...options.headers,
+          },
+        }).then((res) => {
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          return res.json();
+        });
+      }
+
+      // Show a short message at the top, success orerror
+      function showMessage(text, type) {
+        const el = document.getElementById("assemblyMessage");
+        el.textContent = text;
+        el.className = "message " + type;
+        setTimeout(() => {
+          el.className = "message";
+          el.textContent = "";
+        }, 4000);
+      }
+
+      // Load orders with status "assembling"
+      async function loadAssemblingOrders() {
+        const tbody = document.getElementById("assemblyBody");
+        tbody.innerHTML = `<tr><td colspan="4" class="loading"><i class="fas fa-spinner fa-spin"></i> Loading...</td></tr>`;
+        try {
+          const orders = await fetchWithAuth("/orders/all");
+          assemblingOrders = orders.filter((o) => o.status === "assembling");
+
+          if (assemblingOrders.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;">No orders in assembly queue</td></tr>`;
+            return;
+          }
+
+          tbody.innerHTML = assemblingOrders
+            .map((order) => {
+              const itemCount = order.OrderItems ? order.OrderItems.length : 0;
+              const total = Number(order.totalPrice || 0).toFixed(2);
+              return `
+              <tr>
+                <td><strong>#${order.id}</strong></td>
+                <td>${itemCount} item(s)</td>
+                <td>R${total}</td>
+                <td>
+                  <button class="btn-view" onclick="viewItems(${order.id})">View Items</button>
+                  <button class="btn-complete" onclick="markReady(${order.id})">Mark Ready</button>
+                </td>
+              </tr>
+            `;
+            })
+            .join("");
+        } catch (error) {
+          console.error("Load error:", error);
+          tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:#dc3545;">Failed to load orders</td></tr>`;
+        }
+      }
+
+      // Open modal and show the components in an order
+      function viewItems(orderId) {
+        const order = assemblingOrders.find((o) => o.id === orderId);
+        if (!order) return;
+
+        const items = order.OrderItems || [];
+        const modalTitle = document.getElementById("modalTitle");
+        const modalBody = document.getElementById("modalItemsBody");
+
+        modalTitle.textContent = `Order #${order.id} Items`;
+
+        if (items.length === 0) {
+          modalBody.innerHTML = `<tr><td colspan="2" style="text-align:center;">No items found</td></tr>`;
+        } else {
+          modalBody.innerHTML = items
+            .map((item) => {
+              const comp = item.Component || {};
+              return `
+                <tr>
+                  <td>${comp.category || "N/A"}</td>
+                  <td>${comp.name || "Unknown"}</td>
+                </tr>
+              `;
+            })
+            .join("");
+        }
+
+        document.getElementById("itemsModal").classList.remove("hidden");
+      }
+
+      // Close the items modal
+      function closeItemsModal() {
+        document.getElementById("itemsModal").classList.add("hidden");
+      }
+
+      // Mark an assembling order as ready
+      async function markReady(orderId) {
+        try {
+          await fetchWithAuth(`/orders/${orderId}/status`, {
+            method: "PUT",
+            body: JSON.stringify({ status: "ready" }),
+          });
+          showMessage(`Order #${orderId} marked as ready.`, "success");
+          await loadAssemblingOrders();
+        } catch (error) {
+          console.error("Update error:", error);
+          showMessage("Failed to update order: " + error.message, "error");
+        }
+      }
+
+      document.addEventListener("DOMContentLoaded", loadAssemblingOrders);
+    </script>
+  </body>
+</html>

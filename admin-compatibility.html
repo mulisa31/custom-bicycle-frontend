@@ -1,0 +1,833 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Manage Compatibility | CBBS</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+    />
+    <link rel="stylesheet" href="assets/css/styles.css" />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      .main {
+        font-family: "Jost", sans-serif;
+        color: #1a2634;
+        margin: 0 auto;
+        padding: 2rem;
+      }
+
+      .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+      }
+
+      .page-header h1 {
+        font-size: 1.8rem;
+        color: #1a2634;
+      }
+
+      .btn-add {
+        background: #3f705f;
+        color: #fff;
+        border: none;
+        padding: 0.6rem 1.5rem;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: 0.2s;
+        font-family: inherit;
+      }
+
+      .btn-add:hover {
+        background: #2f5a4c;
+      }
+
+      .table-wrap {
+        background: #fff;
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+        overflow-x: auto;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.9rem;
+      }
+
+      th,
+      td {
+        padding: 0.8rem 1rem;
+        text-align: left;
+        border-bottom: 1px solid #edf2f7;
+      }
+
+      th {
+        background: #f8fafc;
+        font-weight: 600;
+        color: #2d3f5e;
+      }
+
+      .compatible-badge {
+        display: inline-block;
+        padding: 0.2rem 0.8rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+      }
+
+      .compatible-badge.yes {
+        background: #d4edda;
+        color: #155724;
+      }
+
+      .compatible-badge.no {
+        background: #f8d7da;
+        color: #721c24;
+      }
+
+      .actions {
+        display: flex;
+        gap: 0.5rem;
+      }
+
+      .btn-edit,
+      .btn-delete {
+        border: none;
+        padding: 0.3rem 0.8rem;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.8rem;
+        font-weight: 600;
+        transition: 0.2s;
+      }
+
+      .btn-edit {
+        background: #cce5ff;
+        color: #004085;
+      }
+
+      .btn-edit:hover {
+        background: #b3d9ff;
+      }
+
+      .btn-delete {
+        background: #f8d7da;
+        color: #721c24;
+      }
+
+      .btn-delete:hover {
+        background: #f5c6cb;
+      }
+
+      .loading-spinner {
+        text-align: center;
+        color: #6c7a8a;
+        padding: 2rem;
+      }
+
+      .empty-state {
+        text-align: center;
+        color: #999;
+        padding: 2rem;
+      }
+
+      .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 999;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .modal.active {
+        display: flex;
+      }
+
+      .modal-content {
+        background: #fff;
+        padding: 2rem;
+        border-radius: 12px;
+        max-width: 500px;
+        width: 90%;
+        max-height: 90vh;
+        overflow-y: auto;
+      }
+
+      .modal-content h2 {
+        margin-top: 0;
+        color: #1a2634;
+      }
+
+      .modal-content label {
+        display: block;
+        margin: 0.8rem 0 0.3rem;
+        font-weight: 600;
+        color: #2d3f5e;
+      }
+
+      .modal-content select,
+      .modal-content input {
+        width: 100%;
+        padding: 0.5rem;
+        border: 1px solid #d9ded9;
+        border-radius: 6px;
+        font-family: inherit;
+        font-size: 0.95rem;
+      }
+
+      .modal-actions {
+        display: flex;
+        gap: 0.8rem;
+        margin-top: 1.5rem;
+      }
+
+      .modal-actions button {
+        padding: 0.5rem 1.5rem;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 600;
+        font-family: inherit;
+      }
+
+      .btn-save {
+        background: #3f705f;
+        color: #fff;
+      }
+
+      .btn-save:hover {
+        background: #2f5a4c;
+      }
+
+      .btn-cancel {
+        background: #e2e8f0;
+        color: #2d3f5e;
+      }
+
+      .btn-cancel:hover {
+        background: #d0d7e0;
+      }
+
+      .modal-content select:disabled {
+        background: #f1f3f5;
+        color: #6c7a8a;
+        cursor: not-allowed;
+        border-color: #e2e8f0;
+      }
+
+      main hr {
+        border: none;
+        border-top: 1px solid #e2e8f0;
+        margin: 0;
+      }
+
+      @media (max-width: 768px) {
+        .main {
+          padding: 1rem;
+        }
+        .page-header {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="header-placeholder"></div>
+    <hr />
+
+    <main class="main">
+      <div class="page-header">
+        <h1><i class="fas fa-link"></i> Compatibility Rules</h1>
+        <button class="btn-add" onclick="openAddModal()">
+          <i class="fas fa-plus"></i> Add Rule
+        </button>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Component A</th>
+              <th>Component B</th>
+              <th>Compatible</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="rulesBody">
+            <tr>
+              <td colspan="5" class="loading-spinner">
+                <i class="fas fa-spinner fa-spin"></i> Loading...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+
+    <hr />
+    <div id="footer-placeholder"></div>
+
+    <div
+      id="deleteRuleModal"
+      style="
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 999;
+        justify-content: center;
+        align-items: center;
+      "
+    >
+      <div
+        style="
+          background: #fff;
+          padding: 30px;
+          border-radius: 8px;
+          max-width: 400px;
+          text-align: center;
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        "
+      >
+        <h3 style="color: #dc3545; margin: 0 0 10px 0">
+          <i class="fas fa-exclamation-triangle"></i> Delete Compatibility Rule?
+        </h3>
+        <p id="deleteRuleMsg" style="margin: 20px 0; font-size: 1rem">
+          Are you sure?
+        </p>
+        <div style="display: flex; gap: 10px; justify-content: center">
+          <button
+            onclick="closeDeleteRule()"
+            style="
+              padding: 8px 25px;
+              border: 1px solid #ccc;
+              background: #fff;
+              border-radius: 4px;
+              cursor: pointer;
+              font-size: 0.95rem;
+            "
+          >
+            Cancel
+          </button>
+          <button
+            onclick="confirmDeleteRule()"
+            style="
+              padding: 8px 25px;
+              border: none;
+              background: #dc3545;
+              color: #fff;
+              border-radius: 4px;
+              cursor: pointer;
+              font-size: 0.95rem;
+            "
+          >
+            <i class="fas fa-trash"></i> Delete
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal" id="ruleModal">
+      <div class="modal-content">
+        <h2 id="modalTitle">Add Compatibility Rule</h2>
+        <form id="ruleForm">
+          <input type="hidden" id="ruleId" />
+
+          <label for="compA">Component A</label>
+          <select id="compA" required>
+            <option value="">Select Component</option>
+          </select>
+
+          <label for="compB">Component B</label>
+          <select id="compB" required>
+            <option value="">Select Component</option>
+          </select>
+
+          <label for="compatible">Are they compatible?</label>
+          <select id="compatible" required>
+            <option value="true">Yes</option>
+            <option value="false">No</option>
+          </select>
+
+          <div class="modal-actions">
+            <button type="submit" class="btn-save" id="saveBtn">
+              Save Rule
+            </button>
+            <button type="button" class="btn-cancel" onclick="closeModal()">
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+    <script src="assets/js/main.js"></script>
+    <script src="assets/js/auth.js"></script>
+    <script src="assets/js/load-components.js"></script>
+
+    <script>
+      const API_BASE = "https://custom-bicycle-system-backend.onrender.com/api";
+      const token = localStorage.getItem("token");
+      let user = null;
+      let allComponents = [];
+      let allRules = [];
+      let deleteRuleId = null;
+
+      // only admin can use this page
+      try {
+        user = JSON.parse(localStorage.getItem("user"));
+        if (user && user.user && typeof user.user === "object") {
+          user = user.user;
+        }
+      } catch (error) {
+        user = null;
+      }
+
+      if (!token || !user || user.role !== "admin") {
+        window.location.href = "login.html";
+      }
+
+      // small popup for errors
+      function showError(title, message) {
+        const existing = document.getElementById("customErrorPopup");
+        if (existing) existing.remove();
+
+        const errorDiv = document.createElement("div");
+        errorDiv.id = "customErrorPopup";
+        errorDiv.style.cssText = `
+          position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+          background: #ffffff; padding: 30px; border-radius: 10px; width: 90%;
+          max-width: 430px; text-align: center; z-index: 5000;
+          box-shadow: 0 8px 30px rgba(0,0,0,0.25); border-top: 4px solid #dc3545;
+          font-family: "Jost", sans-serif;
+        `;
+        errorDiv.innerHTML = `
+          <div style="font-size: 35px; color: #dc3545; margin-bottom: 10px;">
+            <i class="fas fa-exclamation-circle"></i>
+          </div>
+          <h3 style="margin: 0 0 12px 0; color: #1a2634; font-size: 1.3rem;">${title}</h3>
+          <p style="margin: 0 0 22px 0; color: #555; line-height: 1.6; font-size: 0.95rem;">${message}</p>
+          <button type="button" onclick="closeError()" style="padding: 9px 28px; border: none; background: #3f705f; color: #ffffff; border-radius: 6px; cursor: pointer; font-family: inherit; font-weight: 600; font-size: 0.95rem;">Got it</button>
+        `;
+        document.body.appendChild(errorDiv);
+      }
+
+      function closeError() {
+        const errorDiv = document.getElementById("customErrorPopup");
+        if (errorDiv) errorDiv.remove();
+      }
+
+      async function fetchWithAuth(endpoint, options = {}) {
+        const response = await fetch(`${API_BASE}${endpoint}`, {
+          ...options,
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+            ...options.headers,
+          },
+        });
+
+        let data = null;
+        try {
+          data = await response.json();
+        } catch (error) {
+          data = null;
+        }
+
+        if (!response.ok) {
+          const message =
+            data?.message ||
+            data?.error ||
+            `Request failed with status ${response.status}`;
+          const serverError = new Error(message);
+          serverError.status = response.status;
+          throw serverError;
+        }
+
+        return data;
+      }
+
+      async function loadComponents() {
+        try {
+          const response = await fetchWithAuth("/components");
+          if (Array.isArray(response)) allComponents = response;
+          else if (Array.isArray(response.components))
+            allComponents = response.components;
+          else allComponents = [];
+          populateDropdowns();
+        } catch (error) {
+          console.error("Failed to load components:", error);
+          showError(
+            "Unable to Load Components",
+            "The bicycle components could not be loaded from the database. Please check that the server is running and try again.",
+          );
+        }
+      }
+
+      function populateDropdowns() {
+        const compA = document.getElementById("compA");
+        const compB = document.getElementById("compB");
+        if (!compA || !compB) return;
+
+        compA.innerHTML = '<option value="">Select Component</option>';
+        compB.innerHTML = '<option value="">Select Component</option>';
+
+        allComponents.forEach((component) => {
+          const optionA = document.createElement("option");
+          optionA.value = component.id;
+          optionA.textContent = component.name;
+          compA.appendChild(optionA);
+
+          const optionB = document.createElement("option");
+          optionB.value = component.id;
+          optionB.textContent = component.name;
+          compB.appendChild(optionB);
+        });
+      }
+
+      async function loadRules() {
+        const tbody = document.getElementById("rulesBody");
+        tbody.innerHTML = `<tr><td colspan="5" class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> Loading...</td></tr>`;
+
+        try {
+          const response = await fetchWithAuth("/compatibility");
+          if (Array.isArray(response)) allRules = response;
+          else if (Array.isArray(response.rules)) allRules = response.rules;
+          else allRules = [];
+          displayRules();
+        } catch (error) {
+          console.error("Failed to load compatibility rules:", error);
+          tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:#dc3545;padding:30px;"><i class="fas fa-exclamation-circle"></i> Failed to load compatibility rules.</td></tr>`;
+        }
+      }
+
+      function displayRules() {
+        const tbody = document.getElementById("rulesBody");
+        if (!allRules.length) {
+          tbody.innerHTML = `<tr><td colspan="5" class="empty-state">No compatibility rules found.</td></tr>`;
+          return;
+        }
+
+        tbody.innerHTML = allRules
+          .map((rule) => {
+            const componentA = allComponents.find(
+              (c) => Number(c.id) === Number(rule.componentAId),
+            );
+            const componentB = allComponents.find(
+              (c) => Number(c.id) === Number(rule.componentBId),
+            );
+            const compatible = Boolean(rule.compatible);
+            const badgeClass = compatible ? "yes" : "no";
+            const compatibilityText = compatible ? "Yes" : "No";
+            return `
+              <tr>
+                <td>${rule.id}</td>
+                <td>${componentA ? componentA.name : "Unknown Component"}</td>
+                <td>${componentB ? componentB.name : "Unknown Component"}</td>
+                <td><span class="compatible-badge ${badgeClass}">${compatibilityText}</span></td>
+                <td>
+                  <div class="actions">
+                    <button class="btn-edit" type="button" onclick="editRule(${rule.id})"><i class="fas fa-edit"></i></button>
+                    <button class="btn-delete" type="button" onclick="deleteRule(${rule.id})"><i class="fas fa-trash"></i></button>
+                  </div>
+                </td>
+              </tr>
+            `;
+          })
+          .join("");
+      }
+
+      function findExistingRule(componentAId, componentBId, excludeId = null) {
+        return allRules.find((rule) => {
+          if (excludeId !== null && Number(rule.id) === Number(excludeId))
+            return false;
+          const ruleA = Number(rule.componentAId);
+          const ruleB = Number(rule.componentBId);
+          const newA = Number(componentAId);
+          const newB = Number(componentBId);
+          const sameOrder = ruleA === newA && ruleB === newB;
+          const reverseOrder = ruleA === newB && ruleB === newA;
+          return sameOrder || reverseOrder;
+        });
+      }
+
+      function openAddModal() {
+        document.getElementById("modalTitle").textContent =
+          "Add Compatibility Rule";
+        document.getElementById("ruleForm").reset();
+        document.getElementById("ruleId").value = "";
+        document.getElementById("saveBtn").textContent = "Save Rule";
+        document.getElementById("compA").value = "";
+        document.getElementById("compB").value = "";
+        document.getElementById("compatible").value = "true";
+        delete document.getElementById("ruleForm").dataset.originalA;
+        delete document.getElementById("ruleForm").dataset.originalB;
+        delete document.getElementById("ruleForm").dataset.originalCompatible;
+        document.getElementById("ruleModal").classList.add("active");
+        document.getElementById("compA").disabled = false;
+        document.getElementById("compB").disabled = false;
+      }
+
+      async function editRule(id) {
+        try {
+          let rule = allRules.find((item) => Number(item.id) === Number(id));
+          if (!rule) {
+            const response = await fetchWithAuth("/compatibility");
+            const rules = Array.isArray(response)
+              ? response
+              : response.rules || [];
+            rule = rules.find((item) => Number(item.id) === Number(id));
+          }
+
+          if (!rule) {
+            showError(
+              "Rule Not Found",
+              "The compatibility rule could not be found. It may have already been deleted.",
+            );
+            return;
+          }
+
+          const form = document.getElementById("ruleForm");
+          document.getElementById("compA").disabled = true;
+          document.getElementById("compB").disabled = true;
+
+          form.dataset.originalA = rule.componentAId;
+          form.dataset.originalB = rule.componentBId;
+          form.dataset.originalCompatible = String(Boolean(rule.compatible));
+
+          document.getElementById("modalTitle").textContent =
+            "Edit Compatibility Rule";
+          document.getElementById("ruleId").value = rule.id;
+          document.getElementById("compA").value = rule.componentAId;
+          document.getElementById("compB").value = rule.componentBId;
+          document.getElementById("compatible").value = rule.compatible
+            ? "true"
+            : "false";
+          document.getElementById("saveBtn").textContent = "Update Rule";
+          document.getElementById("ruleModal").classList.add("active");
+        } catch (error) {
+          console.error("Edit error:", error);
+          showError(
+            "Unable to Edit Rule",
+            error.message || "Something went wrong while loading the rule.",
+          );
+        }
+      }
+
+      function closeModal() {
+        document.getElementById("ruleModal").classList.remove("active");
+      }
+
+      function deleteRule(id) {
+        const rule = allRules.find((item) => Number(item.id) === Number(id));
+        deleteRuleId = id;
+
+        if (rule) {
+          const componentA = allComponents.find(
+            (c) => Number(c.id) === Number(rule.componentAId),
+          );
+          const componentB = allComponents.find(
+            (c) => Number(c.id) === Number(rule.componentBId),
+          );
+          document.getElementById("deleteRuleMsg").textContent =
+            `Are you sure you want to delete the rule between ${componentA ? componentA.name : "Component A"} and ${componentB ? componentB.name : "Component B"}? This action cannot be undone.`;
+        } else {
+          document.getElementById("deleteRuleMsg").textContent =
+            "Are you sure you want to delete this compatibility rule? This action cannot be undone.";
+        }
+        document.getElementById("deleteRuleModal").style.display = "flex";
+      }
+
+      function closeDeleteRule() {
+        document.getElementById("deleteRuleModal").style.display = "none";
+        deleteRuleId = null;
+      }
+
+      async function confirmDeleteRule() {
+        if (!deleteRuleId) return;
+        try {
+          await fetchWithAuth(`/compatibility/${deleteRuleId}`, {
+            method: "DELETE",
+          });
+          closeDeleteRule();
+          await loadRules();
+        } catch (error) {
+          console.error("Delete error:", error);
+          closeDeleteRule();
+          showError(
+            "Delete Failed",
+            error.message || "The compatibility rule could not be deleted.",
+          );
+        }
+      }
+
+      document
+        .getElementById("ruleForm")
+        .addEventListener("submit", async function (event) {
+          event.preventDefault();
+
+          const id = document.getElementById("ruleId").value.trim();
+          const componentAId = Number(document.getElementById("compA").value);
+          const componentBId = Number(document.getElementById("compB").value);
+          const compatible =
+            document.getElementById("compatible").value === "true";
+
+          if (!componentAId || !componentBId) {
+            showError(
+              "Missing Components",
+              "Please select both Component A and Component B before saving the compatibility rule.",
+            );
+            return;
+          }
+
+          if (componentAId === componentBId) {
+            showError(
+              "Invalid Compatibility Rule",
+              "A component cannot be compared with itself. Please select two different components.",
+            );
+            return;
+          }
+
+          if (id) {
+            const form = document.getElementById("ruleForm");
+            const originalA = Number(form.dataset.originalA);
+            const originalB = Number(form.dataset.originalB);
+            const originalCompatible =
+              form.dataset.originalCompatible === "true";
+            const noChanges =
+              componentAId === originalA &&
+              componentBId === originalB &&
+              compatible === originalCompatible;
+
+            if (noChanges) {
+              showError(
+                "No Changes Made",
+                "The compatibility rule is already exactly the same. Please change the components or compatibility status before updating.",
+              );
+              return;
+            }
+
+            const duplicateRule = findExistingRule(
+              componentAId,
+              componentBId,
+              Number(id),
+            );
+            if (duplicateRule) {
+              showError(
+                "Compatibility Rule Already Exists",
+                "A compatibility rule already exists for these two components. Please choose different components.",
+              );
+              return;
+            }
+
+            try {
+              await fetchWithAuth(`/compatibility/${id}`, {
+                method: "PUT",
+                body: JSON.stringify({
+                  componentAId,
+                  componentBId,
+                  compatible,
+                }),
+              });
+              closeModal();
+              await loadRules();
+            } catch (error) {
+              console.error("Update error:", error);
+              if (error.status === 409) {
+                showError(
+                  "Compatibility Rule Already Exists",
+                  "A compatibility rule already exists for these two components. Please choose a different component combination.",
+                );
+              } else {
+                showError(
+                  "Update Failed",
+                  error.message ||
+                    "The compatibility rule could not be updated.",
+                );
+              }
+            }
+            return;
+          }
+
+          const duplicateRule = findExistingRule(componentAId, componentBId);
+          if (duplicateRule) {
+            const componentA = allComponents.find(
+              (c) => Number(c.id) === componentAId,
+            );
+            const componentB = allComponents.find(
+              (c) => Number(c.id) === componentBId,
+            );
+            showError(
+              "Compatibility Rule Already Exists",
+              `A compatibility rule already exists between ${componentA ? componentA.name : "Component A"} and ${componentB ? componentB.name : "Component B"}. You cannot add the same compatibility rule twice.`,
+            );
+            return;
+          }
+
+          try {
+            await fetchWithAuth("/compatibility", {
+              method: "POST",
+              body: JSON.stringify({ componentAId, componentBId, compatible }),
+            });
+            closeModal();
+            await loadRules();
+          } catch (error) {
+            console.error("Add error:", error);
+            if (error.status === 409) {
+              showError(
+                "Compatibility Rule Already Exists",
+                "A compatibility rule already exists for these two components. The rule was not added.",
+              );
+            } else {
+              showError(
+                "Unable to Add Rule",
+                error.message ||
+                  "The compatibility rule could not be added. Please try again.",
+              );
+            }
+          }
+        });
+
+      document
+        .getElementById("ruleModal")
+        .addEventListener("click", function (event) {
+          if (event.target === this) closeModal();
+        });
+
+      document
+        .getElementById("deleteRuleModal")
+        .addEventListener("click", function (event) {
+          if (event.target === this) closeDeleteRule();
+        });
+
+      document.addEventListener("DOMContentLoaded", async function () {
+        await loadComponents();
+        await loadRules();
+      });
+    </script>
+  </body>
+</html>

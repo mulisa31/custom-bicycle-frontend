@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Reports | CBBS</title>
+    <link rel="stylesheet" href="assets/css/styles.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+    />
+    <style>
+      .reports-container {
+        max-width: 1200px;
+        margin: 2rem auto;
+        padding: 0 1.5rem;
+      }
+      .page-header {
+        margin-bottom: 1.5rem;
+      }
+      .page-header h1 {
+        font-size: 1.8rem;
+        color: #1a2634;
+        margin: 0;
+      }
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.2rem;
+        margin-bottom: 2rem;
+      }
+      .stat-card {
+        background: #fff;
+        padding: 1.5rem;
+        border-radius: 10px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+        text-align: center;
+      }
+      .stat-card .stat-icon {
+        font-size: 1.8rem;
+        color: #3f705f;
+        margin-bottom: 0.5rem;
+      }
+      .stat-card .stat-number {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: #1a2634;
+      }
+      .stat-card .stat-label {
+        font-size: 0.85rem;
+        color: #6c7a8a;
+      }
+      .table-wrap {
+        background: #fff;
+        border-radius: 10px;
+        border: 1px solid #e2e8f0;
+        overflow-x: auto;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.9rem;
+      }
+      th,
+      td {
+        padding: 0.8rem 1rem;
+        text-align: left;
+        border-bottom: 1px solid #edf2f7;
+      }
+      th {
+        background: #f8fafc;
+        font-weight: 600;
+        color: #2d3f5e;
+      }
+      .status-badge {
+        display: inline-block;
+        padding: 0.2rem 0.6rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+      }
+      .status-badge.pending {
+        background: #fff3cd;
+        color: #856404;
+      }
+      .status-badge.completed {
+        background: #d4edda;
+        color: #155724;
+      }
+      .loading {
+        text-align: center;
+        color: #6c7a8a;
+        padding: 2rem;
+      }
+      .hidden {
+        display: none !important;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="header">
+      <div id="header-placeholder"></div>
+    </header>
+    <hr />
+
+    <main>
+      <div class="reports-container">
+        <div class="page-header">
+          <h1><i class="fas fa-chart-bar"></i> Manager Reports</h1>
+        </div>
+
+        <!-- Summary cards -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-shopping-cart"></i></div>
+            <div class="stat-number" id="totalOrders">—</div>
+            <div class="stat-label">Total Orders</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-money-bill-wave"></i></div>
+            <div class="stat-number" id="totalRevenue">—</div>
+            <div class="stat-label">Total Revenue</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-cubes"></i></div>
+            <div class="stat-number" id="totalComponents">—</div>
+            <div class="stat-label">Components in Stock</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">
+              <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div class="stat-number" id="lowStockCount">—</div>
+            <div class="stat-label">Low Stock Items</div>
+          </div>
+        </div>
+
+        <!-- Recent orders table -->
+        <h2 style="margin-bottom: 1rem">Recent Orders</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Order ID</th>
+                <th>Status</th>
+                <th>Total</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+            <tbody id="recentOrdersBody">
+              <tr>
+                <td colspan="4" class="loading">
+                  <i class="fas fa-spinner fa-spin"></i> Loading...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <hr />
+    </main>
+
+    <div id="footer-placeholder"></div>
+
+    <script src="assets/js/load-components.js"></script>
+    <script>
+      // live API URL
+      const API_BASE = "https://custom-bicycle-system-backend.onrender.com/api";
+      const token = localStorage.getItem("token");
+      const user = JSON.parse(localStorage.getItem("user") || "null");
+
+      // only managers can see reports
+      if (!token || !user || user.role !== "manager") {
+        window.location.href = "login.html";
+      }
+
+      function fetchWithAuth(endpoint) {
+        return fetch(`${API_BASE}${endpoint}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }).then((res) => {
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          return res.json();
+        });
+      }
+
+      async function loadReports() {
+        try {
+          // get orders and components at the same time
+          const [orders, components] = await Promise.all([
+            fetchWithAuth("/orders/all"),
+            fetchWithAuth("/components"),
+          ]);
+
+          // calculate summary numbers
+          const totalOrders = orders.length;
+          const totalRevenue = orders.reduce(
+            (sum, o) => sum + (Number(o.totalPrice) || 0),
+            0,
+          );
+          const totalComponents = components.length;
+          const lowStockCount = components.filter(
+            (c) => c.stockQuantity < 10,
+          ).length;
+
+          // update the cards
+          document.getElementById("totalOrders").textContent = totalOrders;
+          document.getElementById("totalRevenue").textContent =
+            `R${totalRevenue.toFixed(2)}`;
+          document.getElementById("totalComponents").textContent =
+            totalComponents;
+          document.getElementById("lowStockCount").textContent = lowStockCount;
+
+          // show the last 10 orders
+          const recent = orders.slice(0, 10);
+          const tbody = document.getElementById("recentOrdersBody");
+          if (recent.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;">No orders yet</td></tr>`;
+          } else {
+            tbody.innerHTML = recent
+              .map(
+                (order) => `
+              <tr>
+                <td><strong>#${order.id}</strong></td>
+                <td><span class="status-badge ${order.status || "pending"}">${order.status || "pending"}</span></td>
+                <td>R${Number(order.totalPrice || 0).toFixed(2)}</td>
+                <td>${order.createdAt ? new Date(order.createdAt).toLocaleDateString() : "N/A"}</td>
+              </tr>
+            `,
+              )
+              .join("");
+          }
+        } catch (error) {
+          console.error("Report load error:", error);
+          document.getElementById("recentOrdersBody").innerHTML =
+            `<tr><td colspan="4" style="text-align:center;color:#dc3545;">Failed to load reports</td></tr>`;
+        }
+      }
+
+      document.addEventListener("DOMContentLoaded", loadReports);
+    </script>
+  </body>
+</html>

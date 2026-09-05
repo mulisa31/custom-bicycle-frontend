@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="stylesheet"
+      href="https://cdn-uicons.flaticon.com/2.0.0/uicons-regular-straight/css/uicons-regular-straight.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css"
+    />
+    <link rel="stylesheet" href="./assets/css/styles.css" />
+    <style>
+      .cb-contact-section {
+        width: 100% !important;
+        min-height: 70vh !important;
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+        padding: 60px 20px !important;
+        background: #f8f9f7 !important;
+        box-sizing: border-box !important;
+      }
+      .cb-contact-card {
+        width: 100% !important;
+        max-width: 540px !important;
+        padding: 42px !important;
+        background: #ffffff !important;
+        border: 1px solid #e6e9e4 !important;
+        border-radius: 16px !important;
+        box-shadow: 0 12px 40px rgba(30, 42, 35, 0.08) !important;
+        box-sizing: border-box !important;
+      }
+      .cb-contact-title {
+        margin: 0 !important;
+        text-align: center !important;
+        color: #1f2d27 !important;
+        font-size: 28px !important;
+        font-weight: 700 !important;
+      }
+      .cb-contact-subtitle {
+        margin: 8px 0 28px !important;
+        text-align: center !important;
+        color: #737b76 !important;
+        font-size: 14px !important;
+      }
+      .cb-contact-item {
+        display: flex !important;
+        align-items: center !important;
+        gap: 14px !important;
+        padding: 14px 0 !important;
+        border-bottom: 1px solid #eef1ee !important;
+      }
+      .cb-contact-item:last-child {
+        border-bottom: none !important;
+      }
+      .cb-contact-icon {
+        font-size: 20px !important;
+        color: #3f705f !important;
+        width: 36px !important;
+        text-align: center !important;
+      }
+      .cb-contact-label {
+        font-weight: 600 !important;
+        color: #29352f !important;
+        font-size: 14px !important;
+        min-width: 70px !important;
+      }
+      .cb-contact-value {
+        color: #4a5550 !important;
+        font-size: 14px !important;
+        word-break: break-word !important;
+      }
+      .cb-contact-value a {
+        color: #3f705f !important;
+        text-decoration: none !important;
+        transition: color 0.2s !important;
+      }
+      .cb-contact-value a:hover {
+        color: #294e42 !important;
+        text-decoration: underline !important;
+      }
+      .cb-contact-form {
+        margin-top: 24px !important;
+        padding-top: 24px !important;
+        border-top: 1px solid #eef1ee !important;
+      }
+      .cb-contact-form label {
+        display: block !important;
+        margin-bottom: 6px !important;
+        color: #29352f !important;
+        font-size: 14px !important;
+        font-weight: 600 !important;
+      }
+      .cb-contact-form input,
+      .cb-contact-form textarea {
+        width: 100% !important;
+        padding: 12px 14px !important;
+        border: 1px solid #d9ded9 !important;
+        border-radius: 8px !important;
+        background: #fbfcfb !important;
+        font-size: 14px !important;
+        outline: none !important;
+        box-sizing: border-box !important;
+        font-family: inherit !important;
+        margin-bottom: 14px !important;
+      }
+      .cb-contact-form input:focus,
+      .cb-contact-form textarea:focus {
+        border-color: #4d806f !important;
+        box-shadow: 0 0 0 3px rgba(77, 128, 111, 0.12) !important;
+      }
+      .cb-contact-form textarea {
+        min-height: 100px !important;
+        resize: vertical !important;
+      }
+      .cb-contact-button {
+        width: 100% !important;
+        height: 50px !important;
+        border: none !important;
+        border-radius: 8px !important;
+        background: #3f705f !important;
+        color: #ffffff !important;
+        font-size: 15px !important;
+        font-weight: 600 !important;
+        cursor: pointer !important;
+        transition: background 0.2s ease !important;
+      }
+      .cb-contact-button:hover {
+        background: #315b4d !important;
+      }
+      @media (max-width: 576px) {
+        .cb-contact-card {
+          padding: 30px 20px !important;
+        }
+        .cb-contact-title {
+          font-size: 24px !important;
+        }
+        .cb-contact-item {
+          flex-wrap: wrap !important;
+          gap: 4px !important;
+        }
+      }
+    </style>
+    <title>Contact Us</title>
+  </head>
+  <body>
+    <header class="header">
+      <div id="header-placeholder"></div>
+    </header>
+    <hr />
+    <main class="main">
+      <section class="cb-contact-section">
+        <div class="cb-contact-card">
+          <h1 class="cb-contact-title">Get in Touch</h1>
+          <p class="cb-contact-subtitle">We'd love to hear from you</p>
+
+          <div class="cb-contact-item">
+            <span class="cb-contact-icon"
+              ><i class="fi fi-rs-envelope"></i
+            ></span>
+            <span class="cb-contact-label">Email</span>
+            <span class="cb-contact-value">
+              <a
+                href="mailto:info@custombicycle.com?subject=Enquiry%20from%20Website"
+                >info@custombicycle.com</a
+              >
+            </span>
+          </div>
+
+          <div class="cb-contact-item">
+            <span class="cb-contact-icon"
+              ><i class="fi fi-rs-phone-call"></i
+            ></span>
+            <span class="cb-contact-label">Phone</span>
+            <span class="cb-contact-value">
+              <a href="tel:+2772080933">072 080 9633</a>
+            </span>
+          </div>
+
+          <div class="cb-contact-item">
+            <span class="cb-contact-icon"><i class="fi fi-rs-marker"></i></span>
+            <span class="cb-contact-label">Address</span>
+            <span class="cb-contact-value">123 Road East</span>
+          </div>
+
+          <div class="cb-contact-item">
+            <span class="cb-contact-icon"><i class="fi fi-rs-clock"></i></span>
+            <span class="cb-contact-label">Hours</span>
+            <span class="cb-contact-value">09:00 - 17:00, Mon - Sat</span>
+          </div>
+        </div>
+      </section>
+    </main>
+    <hr />
+
+    <div id="footer-placeholder"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+    <script src="assets/js/main.js"></script>
+    <script src="assets/js/load-components.js"></script>
+  </body>
+</html>

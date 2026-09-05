@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="stylesheet"
+      href="https://cdn-uicons.flaticon.com/2.0.0/uicons-regular-straight/css/uicons-regular-straight.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css"
+    />
+    <link rel="stylesheet" href="./assets/css/styles.css" />
+    <title>Order History | CBBS</title>
+    <style>
+      .order-message {
+        padding: 10px 14px;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 500;
+        display: none;
+        margin-bottom: 15px;
+      }
+      .order-message.success {
+        display: block;
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+      }
+      .order-message.error {
+        display: block;
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+      }
+      .order-message.empty {
+        display: block;
+        background: #f8faf8;
+        color: #3f705f;
+        border: 1px solid #e8ede8;
+        text-align: center;
+        font-size: 18px;
+        padding: 3rem 2rem;
+        margin-top: 1rem;
+      }
+      .order-message.empty .sub-text {
+        font-size: 14px;
+        color: #6c7a8a;
+        margin-top: 0.5rem;
+        font-weight: 400;
+      }
+      .btn-view {
+        background: #cce5ff;
+        color: #004085;
+        border: none;
+        padding: 0.4rem 1rem;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.85rem;
+        transition: background 0.2s;
+        text-decoration: none;
+        display: inline-block;
+        font-family: inherit;
+      }
+      .btn-view:hover {
+        background: #b3d9ff;
+      }
+      .status-badge {
+        display: inline-block;
+        padding: 0.25rem 0.8rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: capitalize;
+      }
+      .status-badge.pending {
+        background: #fff3cd;
+        color: #856404;
+      }
+      .status-badge.assembling {
+        background: #cce5ff;
+        color: #004085;
+      }
+      .status-badge.ready {
+        background: #d1ecf1;
+        color: #0c5460;
+      }
+      .status-badge.shipped {
+        background: #d4edda;
+        color: #155724;
+      }
+      .status-badge.completed {
+        background: #d4edda;
+        color: #155724;
+        font-weight: 700;
+      }
+      .hidden {
+        display: none !important;
+      }
+      .address-cell {
+        max-width: 200px;
+        word-break: break-word;
+        font-size: 0.85rem;
+      }
+    </style>
+  </head>
+
+  <body>
+    <header class="header">
+      <div id="header-placeholder"></div>
+    </header>
+    <hr />
+
+    <main class="main">
+      <section class="cart section--lg container">
+        <h2 style="margin-bottom: 1.5rem">My Orders</h2>
+
+        <div id="orderMessage" class="order-message"></div>
+
+        <div class="table__container hidden" id="tableContainer">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Order ID</th>
+                <th>Status</th>
+                <th>Total Price</th>
+                <th>Shipping Address</th>
+                <th>Date Placed</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="ordersBody">
+              <tr>
+                <td
+                  colspan="6"
+                  style="text-align: center; padding: 2rem; color: #6c7a8a"
+                >
+                  Loading orders...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <hr />
+    <footer class="footer container">
+      <div id="footer-placeholder"></div>
+    </footer>
+
+    <script src="assets/js/main.js"></script>
+    <script src="assets/js/auth.js"></script>
+    <script src="assets/js/load-components.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+
+    <script>
+      // live API
+      const API_BASE = "https://custom-bicycle-system-backend.onrender.com/api";
+      const token = localStorage.getItem("token");
+      let allOrders = [];
+
+      // show a  message at the top of the orders area
+      function showMessage(text, type) {
+        const el = document.getElementById("orderMessage");
+        el.textContent = text;
+        el.className = "order-message " + type;
+      }
+
+      // fetch with auth
+      function fetchWithAuth(endpoint, options = {}) {
+        return fetch(`${API_BASE}${endpoint}`, {
+          ...options,
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+            ...options.headers,
+          },
+        }).then((res) => {
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          return res.json();
+        });
+      }
+
+      // no orders, hide the table
+      function showEmptyOrders() {
+        document.getElementById("tableContainer").classList.add("hidden");
+        document
+          .getElementById("tableContainer")
+          .classList.remove("table__container");
+
+        const el = document.getElementById("orderMessage");
+        el.className = "order-message empty";
+        el.innerHTML = `
+          You have no orders yet.
+          <div class="sub-text">Build a bicycle and place an order to see it here.</div>
+        `;
+      }
+
+      // show the orders table again
+      function showOrdersTable() {
+        document.getElementById("tableContainer").classList.remove("hidden");
+        document
+          .getElementById("tableContainer")
+          .classList.add("table__container");
+      }
+
+      function formatDate(dateString) {
+        if (!dateString) return "N/A";
+        const date = new Date(dateString);
+        return date.toLocaleDateString("en-ZA", {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+      }
+
+      // join shipping fields into one  line
+      function buildAddress(order) {
+        const parts = [];
+        if (order.shippingAddress) parts.push(order.shippingAddress);
+        if (order.shippingCity) parts.push(order.shippingCity);
+        if (order.shippingProvince) parts.push(order.shippingProvince);
+        if (order.shippingPostcode) parts.push(order.shippingPostcode);
+        return parts.length > 0 ? parts.join(", ") : "Not provided";
+      }
+
+      async function loadOrders() {
+        const tbody = document.getElementById("ordersBody");
+
+        if (!token) {
+          showEmptyOrders();
+          document.getElementById("orderMessage").innerHTML = `
+            Please <a href="login.html" style="color:#3f705f;font-weight:600;">login</a> to view your orders.
+          `;
+          return;
+        }
+
+        try {
+          const orders = await fetchWithAuth("/orders/my-orders");
+
+          if (!orders || orders.length === 0) {
+            showEmptyOrders();
+            return;
+          }
+
+          showOrdersTable();
+          allOrders = orders;
+          document.getElementById("orderMessage").className = "order-message";
+          document.getElementById("orderMessage").textContent = "";
+
+          let html = "";
+
+          orders.forEach((order) => {
+            const statusClass = order.status || "pending";
+            const address = buildAddress(order);
+
+            html += `
+              <tr>
+                <td><strong>#${order.id}</strong></td>
+                <td><span class="status-badge ${statusClass}">${order.status || "pending"}</span></td>
+                <td>R${Number(order.totalPrice || 0).toFixed(2)}</td>
+                <td class="address-cell">${address}</td>
+                <td>${formatDate(order.createdAt)}</td>
+                <td>
+                  <button class="btn-view" onclick="viewOrderItems(${order.id})">View Items</button>
+                </td>
+              </tr>
+            `;
+          });
+
+          tbody.innerHTML = html;
+        } catch (error) {
+          console.error("Error loading orders:", error);
+
+          if (error.message.includes("404")) {
+            showEmptyOrders();
+          } else {
+            showOrdersTable();
+            tbody.innerHTML = `
+              <tr>
+                <td colspan="6" style="text-align:center;padding:2rem;color:#dc3545;">
+                  Failed to load orders. Please try again.
+                </td>
+              </tr>
+            `;
+          }
+        }
+      }
+
+      // open modal with ordered components
+      function viewOrderItems(orderId) {
+        const order = allOrders.find((o) => o.id === orderId);
+        if (!order) return;
+
+        const existingModal = document.getElementById("orderItemsModal");
+        if (existingModal) existingModal.remove();
+
+        const modal = document.createElement("div");
+        modal.id = "orderItemsModal";
+        modal.style.cssText = `
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: rgba(0,0,0,0.5);
+          z-index: 999;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+        `;
+
+        let itemsHtml = "";
+        if (order.OrderItems && order.OrderItems.length > 0) {
+          itemsHtml = order.OrderItems.map(
+            (item) => `
+            <tr style="border-bottom:1px solid #f0f2f5;">
+              <td style="padding:8px;">${item.Component ? item.Component.name : "Unknown"}</td>
+              <td style="padding:8px;">${item.Component ? item.Component.category || "General" : "N/A"}</td>
+              <td style="padding:8px;">R${item.Component ? Number(item.Component.unitPrice).toFixed(2) : "0.00"}</td>
+            </tr>
+          `,
+          ).join("");
+        } else {
+          itemsHtml = `<tr><td colspan="3" style="padding:8px;text-align:center;">No items found for this order.</td></tr>`;
+        }
+
+        modal.innerHTML = `
+          <div style="background:#fff;padding:25px;border-radius:10px;max-width:600px;width:90%;max-height:80vh;overflow-y:auto;">
+            <h3 style="margin-top:0;color:#1a2634;">Order #${order.id} Items</h3>
+            <table style="width:100%;border-collapse:collapse;font-size:0.9rem;">
+              <thead>
+                <tr style="border-bottom:2px solid #e2e8f0;">
+                  <th style="text-align:left;padding:8px;">Component</th>
+                  <th style="text-align:left;padding:8px;">Category</th>
+                  <th style="text-align:left;padding:8px;">Price</th>
+                </tr>
+              </thead>
+              <tbody>${itemsHtml}</tbody>
+            </table>
+            <div style="margin-top:15px;text-align:right;">
+              <button onclick="document.getElementById('orderItemsModal').remove()"
+                style="padding:8px 20px;background:#3f705f;color:#fff;border:none;border-radius:5px;cursor:pointer;font-family:inherit;">
+                Close
+              </button>
+            </div>
+          </div>
+        `;
+
+        document.body.appendChild(modal);
+        modal.addEventListener("click", function (e) {
+          if (e.target === this) this.remove();
+        });
+      }
+
+      document.addEventListener("DOMContentLoaded", loadOrders);
+    </script>
+  </body>
+</html>

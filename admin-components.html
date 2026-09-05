@@ -1,0 +1,838 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Manage Components | CBBS</title>
+    <link rel="stylesheet" href="assets/css/styles.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+    />
+    <style>
+      .components-container {
+        max-width: 1200px;
+        margin: 2rem auto;
+        padding: 0 1.5rem;
+      }
+      .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+      }
+      .page-header h1 {
+        margin: 0;
+        font-size: 1.8rem;
+        color: #1a2634;
+      }
+      .btn-add {
+        background: #3f705f;
+        color: #fff;
+        border: none;
+        padding: 0.6rem 1.5rem;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: 0.2s;
+      }
+      .btn-add:hover {
+        background: #2f5a4c;
+      }
+
+      /* Filter styles */
+      .filter-section {
+        background: #fff;
+        padding: 1.5rem;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+      }
+      .filter-group {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      .filter-group select {
+        padding: 0.5rem 1rem;
+        border: 1px solid #d9ded9;
+        border-radius: 6px;
+        font-family: inherit;
+        font-size: 0.9rem;
+        background: #fff;
+        color: #1a2634;
+        min-width: 180px;
+        cursor: pointer;
+      }
+      .filter-group select:focus {
+        border-color: #3f705f;
+        outline: none;
+      }
+      .filter-group .filter-btn {
+        padding: 0.5rem 1.5rem;
+        background: #3f705f;
+        color: #fff;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: background 0.2s;
+        white-space: nowrap;
+      }
+      .filter-group .filter-btn:hover {
+        background: #2f5a4c;
+      }
+      .filter-group .clear-btn {
+        background: #e2e8f0;
+        color: #2d3f5e;
+      }
+      .filter-group .clear-btn:hover {
+        background: #d0d7e0;
+      }
+      .filter-count {
+        margin-left: auto;
+        font-size: 0.9rem;
+        color: #6c7a8a;
+        white-space: nowrap;
+      }
+
+      .table-wrap {
+        background: #fff;
+        border-radius: 0.5rem;
+        border: 1px solid #e2e8f0;
+        overflow-x: auto;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.9rem;
+      }
+      th,
+      td {
+        padding: 0.8rem 1rem;
+        text-align: left;
+        border-bottom: 1px solid #edf2f7;
+      }
+      th {
+        background: #f8fafc;
+        font-weight: 600;
+        color: #2d3f5e;
+      }
+      .actions {
+        display: flex;
+        gap: 0.5rem;
+      }
+      .btn-edit,
+      .btn-delete {
+        border: none;
+        padding: 0.3rem 0.8rem;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.8rem;
+        font-weight: 600;
+        transition: 0.2s;
+      }
+      .btn-edit {
+        background: #cce5ff;
+        color: #004085;
+      }
+      .btn-edit:hover {
+        background: #b3d9ff;
+      }
+      .btn-delete {
+        background: #f8d7da;
+        color: #721c24;
+      }
+      .btn-delete:hover {
+        background: #f5c6cb;
+      }
+      .status-badge {
+        display: inline-block;
+        padding: 0.2rem 0.6rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+      }
+      .status-badge.in-stock {
+        background: #d4edda;
+        color: #155724;
+      }
+      .status-badge.low-stock {
+        background: #fff3cd;
+        color: #856404;
+      }
+      .status-badge.out-of-stock {
+        background: #f8d7da;
+        color: #721c24;
+      }
+      .thumbnail {
+        width: 50px;
+        height: 50px;
+        object-fit: cover;
+        border-radius: 4px;
+        border: 1px solid #e2e8f0;
+      }
+      .thumbnail-placeholder {
+        width: 50px;
+        height: 50px;
+        background: #f1f3f5;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #adb5bd;
+        font-size: 0.7rem;
+      }
+      .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 999;
+        justify-content: center;
+        align-items: center;
+      }
+      .modal.active {
+        display: flex;
+      }
+      .modal-content {
+        background: #fff;
+        padding: 2rem;
+        border-radius: 0.5rem;
+        max-width: 500px;
+        width: 90%;
+        max-height: 90vh;
+        overflow-y: auto;
+      }
+      .modal-content h2 {
+        margin-top: 0;
+        color: #1a2634;
+      }
+      .modal-content label {
+        display: block;
+        margin: 0.8rem 0 0.3rem;
+        font-weight: 600;
+        color: #2d3f5e;
+      }
+      .modal-content input,
+      .modal-content textarea,
+      .modal-content select {
+        width: 100%;
+        padding: 0.5rem;
+        border: 1px solid #d9ded9;
+        border-radius: 4px;
+        font-family: inherit;
+      }
+      .modal-content input[type="file"] {
+        padding: 0.3rem 0;
+      }
+      .modal-content textarea {
+        resize: vertical;
+        min-height: 60px;
+      }
+      .current-image {
+        margin-top: 0.3rem;
+        font-size: 0.85rem;
+        color: #6c7a8a;
+      }
+      .current-image img {
+        max-height: 80px;
+        border-radius: 4px;
+        border: 1px solid #e2e8f0;
+        margin-top: 0.3rem;
+      }
+      .modal-actions {
+        display: flex;
+        gap: 0.8rem;
+        margin-top: 1.5rem;
+      }
+      .modal-actions button {
+        padding: 0.5rem 1.5rem;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: 600;
+      }
+      .btn-save {
+        background: #3f705f;
+        color: #fff;
+      }
+      .btn-save:hover {
+        background: #2f5a4c;
+      }
+      .btn-cancel {
+        background: #e2e8f0;
+        color: #2d3f5e;
+      }
+      .btn-cancel:hover {
+        background: #d0d7e0;
+      }
+      .loading-spinner {
+        text-align: center;
+        color: #6c7a8a;
+        padding: 2rem;
+      }
+      .empty-state {
+        text-align: center;
+        color: #999;
+        padding: 2rem;
+      }
+      #deleteModal.active {
+        display: flex !important;
+      }
+
+      @media (max-width: 768px) {
+        .filter-group {
+          flex-direction: column;
+        }
+        .filter-group select,
+        .filter-group button {
+          width: 100%;
+        }
+        .filter-count {
+          margin-left: 0;
+          width: 100%;
+          text-align: center;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="header">
+      <div id="header-placeholder"></div>
+    </header>
+
+    <main>
+      <hr />
+      <div class="components-container">
+        <div class="page-header">
+          <h1><i class="fas fa-cogs"></i> Manage Components</h1>
+          <button class="btn-add" onclick="openAddModal()">
+            <i class="fas fa-plus"></i> Add Component
+          </button>
+        </div>
+
+        <div class="filter-section">
+          <div class="filter-group">
+            <select id="filterCategory">
+              <option value="">All Categories</option>
+            </select>
+            <select id="filterStatus">
+              <option value="">All Status</option>
+              <option value="in-stock">In Stock</option>
+              <option value="low-stock">Low Stock</option>
+              <option value="out-of-stock">Out of Stock</option>
+            </select>
+            <select id="filterPrice">
+              <option value="">All Prices</option>
+              <option value="0-500">R0 – R500</option>
+              <option value="500-1000">R500 – R1,000</option>
+              <option value="1000-2000">R1,000 – R2,000</option>
+              <option value="2000-5000">R2,000 – R5,000</option>
+              <option value="5000-99999">R5,000+</option>
+            </select>
+            <button class="filter-btn" onclick="applyFilters()">
+              <i class="fas fa-filter"></i> Apply Filters
+            </button>
+            <button class="filter-btn clear-btn" onclick="clearFilters()">
+              <i class="fas fa-times"></i> Clear
+            </button>
+            <span class="filter-count" id="filterCount"
+              >Showing all components</span
+            >
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Image</th>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Category</th>
+                <th>Description</th>
+                <th>Price (R)</th>
+                <th>Stock</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="componentsBody">
+              <tr>
+                <td colspan="9" class="loading-spinner">
+                  <i class="fas fa-spinner fa-spin"></i> Loading...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <hr />
+    </main>
+
+    <div id="footer-placeholder"></div>
+
+    <div class="modal" id="componentModal">
+      <div class="modal-content">
+        <h2 id="modalTitle">Add Component</h2>
+        <form id="componentForm" enctype="multipart/form-data">
+          <input type="hidden" id="componentId" />
+          <label for="compName">Name *</label>
+          <input type="text" id="compName" required />
+          <label
+            for="compCategory"
+            style="
+              font-weight: 600;
+              color: #2d3f5e;
+              display: block;
+              margin: 0.8rem 0 0.3rem;
+            "
+          >
+            Category <span style="color: #dc3545">*</span>
+          </label>
+          <select
+            id="compCategory"
+            required
+            style="
+              width: 100%;
+              padding: 0.5rem 0.75rem;
+              border: 1px solid #d9ded9;
+              border-radius: 6px;
+              font-family: inherit;
+              font-size: 0.95rem;
+              background-color: #fff;
+              color: #1a2634;
+              appearance: auto;
+              cursor: pointer;
+              transition: border-color 0.2s;
+            "
+            onfocus="this.style.borderColor = '#3f705f'"
+            onblur="this.style.borderColor = '#d9ded9'"
+          >
+            <option value="">Select Category</option>
+            <option value="Frame">Frame</option>
+            <option value="Fork">Fork</option>
+            <option value="Wheels">Wheels</option>
+            <option value="Tires">Tires</option>
+            <option value="Crankset">Crankset</option>
+            <option value="Cassette">Cassette</option>
+            <option value="Chain">Chain</option>
+            <option value="Derailleurs">Derailleurs</option>
+            <option value="Brakes">Brakes</option>
+            <option value="Handlebars">Handlebars</option>
+            <option value="Saddle">Saddle</option>
+            <option value="Pedals">Pedals</option>
+            <option value="Other">Other</option>
+          </select>
+
+          <label for="compDesc">Description</label>
+          <textarea id="compDesc"></textarea>
+
+          <label for="compPrice">Price (R) *</label>
+          <input type="number" id="compPrice" step="0.01" required />
+
+          <label for="compStock">Stock *</label>
+          <input type="number" id="compStock" required />
+
+          <label for="compImage">Image</label>
+          <input type="file" id="compImage" accept="image/*" />
+          <div id="currentImageDisplay" class="current-image"></div>
+
+          <div class="modal-actions">
+            <button type="submit" class="btn-save" id="saveBtn">Save</button>
+            <button type="button" class="btn-cancel" onclick="closeModal()">
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <script src="assets/js/load-components.js"></script>
+    <script>
+      let currentEditId = null;
+      let allComponents = [];
+      let filteredComponents = [];
+      const user = JSON.parse(localStorage.getItem("user"));
+      const token = localStorage.getItem("token");
+      if (!user || user.role !== "admin") window.location.href = "login.html";
+
+      const API_BASE = "https://custom-bicycle-system-backend.onrender.com/api";
+
+      // Fetch with auth token attached
+      function fetchWithAuth(endpoint, options = {}) {
+        return fetch(`${API_BASE}${endpoint}`, {
+          ...options,
+          headers: {
+            Authorization: `Bearer ${token}`,
+            ...options.headers,
+          },
+        }).then((res) => {
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          return res.json();
+        });
+      }
+
+      // Fill category dropdown with existing categories
+      function populateCategoryFilter(components) {
+        const catSelect = document.getElementById("filterCategory");
+        catSelect.innerHTML = '<option value="">All Categories</option>';
+
+        const categories = [
+          ...new Set(components.map((c) => c.category).filter(Boolean)),
+        ];
+        categories.sort();
+        categories.forEach((cat) => {
+          const option = document.createElement("option");
+          option.value = cat;
+          option.textContent = cat;
+          catSelect.appendChild(option);
+        });
+      }
+
+      // Apply selected filters
+      function applyFilters() {
+        const category = document.getElementById("filterCategory").value;
+        const status = document.getElementById("filterStatus").value;
+        const priceRange = document.getElementById("filterPrice").value;
+
+        filteredComponents = allComponents.filter((comp) => {
+          let match = true;
+
+          if (category) {
+            match = match && comp.category === category;
+          }
+
+          if (status) {
+            const stock = parseInt(comp.stockQuantity) || 0;
+            if (status === "in-stock") {
+              match = match && stock >= 10;
+            } else if (status === "low-stock") {
+              match = match && stock > 0 && stock < 10;
+            } else if (status === "out-of-stock") {
+              match = match && stock === 0;
+            }
+          }
+
+          if (priceRange) {
+            const [min, max] = priceRange.split("-").map(Number);
+            const price = Number(comp.unitPrice);
+            if (max === 99999) {
+              match = match && price >= min;
+            } else {
+              match = match && price >= min && price <= max;
+            }
+          }
+
+          return match;
+        });
+
+        renderFilteredComponents();
+      }
+
+      // Reset filters to show all components
+      function clearFilters() {
+        document.getElementById("filterCategory").value = "";
+        document.getElementById("filterStatus").value = "";
+        document.getElementById("filterPrice").value = "";
+        filteredComponents = [...allComponents];
+        renderFilteredComponents();
+      }
+
+      // Render table rows based on filtered components
+      function renderFilteredComponents() {
+        const tbody = document.getElementById("componentsBody");
+        const filterCount = document.getElementById("filterCount");
+
+        if (filteredComponents.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="9" class="empty-state">No components found matching your filters.</td></tr>`;
+          filterCount.textContent = "No components found";
+          return;
+        }
+
+        filterCount.textContent = `Showing ${filteredComponents.length} of ${allComponents.length} components`;
+
+        tbody.innerHTML = filteredComponents
+          .map((comp) => {
+            let status = "in-stock",
+              statusText = "In Stock";
+            if (comp.stockQuantity === 0) {
+              status = "out-of-stock";
+              statusText = "Out of Stock";
+            } else if (comp.stockQuantity < 10) {
+              status = "low-stock";
+              statusText = "Low Stock";
+            }
+
+            // Handle image URL (Cloudinary or local placeholder)
+            let imageHtml;
+            if (comp.image_url && comp.image_url.startsWith("http")) {
+              imageHtml = `<img src="${comp.image_url}" class="thumbnail" onerror="this.parentElement.innerHTML='<div class=\'thumbnail-placeholder\'>No img</div>'" />`;
+            } else if (comp.image_url) {
+              imageHtml = `<img src="${API_BASE.replace("/api", "")}${comp.image_url}" class="thumbnail" onerror="this.parentElement.innerHTML='<div class=\'thumbnail-placeholder\'>No img</div>'" />`;
+            } else {
+              imageHtml = `<div class="thumbnail-placeholder">No image</div>`;
+            }
+
+            return `
+              <tr>
+                <td>${imageHtml}</td>
+                <td>${comp.id}</td>
+                <td><strong>${comp.name}</strong></td>
+                <td><span style="color:#3f705f;font-weight:600;">${comp.category || "General"}</span></td>
+                <td>${comp.description || "-"}</td>
+                <td>R${Number(comp.unitPrice).toFixed(2)}</td>
+                <td>${comp.stockQuantity}</td>
+                <td><span class="status-badge ${status}">${statusText}</span></td>
+                <td>
+                  <div class="actions">
+                    <button class="btn-edit" onclick="editComponent(${comp.id})"><i class="fas fa-edit"></i></button>
+                    <button class="btn-delete" onclick="deleteComponent(${comp.id}, '${comp.name.replace(/'/g, "\\'")}')"><i class="fas fa-trash"></i></button>
+                  </div>
+                </td>
+              </tr>
+            `;
+          })
+          .join("");
+      }
+
+      // Load all components from the API
+      async function loadComponents() {
+        const tbody = document.getElementById("componentsBody");
+        tbody.innerHTML = `<tr><td colspan="9" class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> Loading...</td></tr>`;
+        try {
+          const data = await fetchWithAuth("/components");
+          allComponents = Array.isArray(data) ? data : [];
+          filteredComponents = [...allComponents];
+
+          if (allComponents.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="9" class="empty-state">No components found. Add one!</td></tr>`;
+            return;
+          }
+
+          populateCategoryFilter(allComponents);
+          renderFilteredComponents();
+        } catch (error) {
+          tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:#dc3545;">Failed to load.</td></tr>`;
+        }
+      }
+
+      // Open the modal for adding a new component
+      function openAddModal() {
+        currentEditId = null;
+        document.getElementById("modalTitle").textContent = "Add Component";
+        document.getElementById("componentForm").reset();
+        document.getElementById("componentId").value = "";
+        document.getElementById("saveBtn").textContent = "Add Component";
+        document.getElementById("currentImageDisplay").innerHTML = "";
+        document.getElementById("componentModal").classList.add("active");
+      }
+
+      // Open modal with existing component data for editing
+      async function editComponent(id) {
+        try {
+          const data = await fetchWithAuth("/components");
+          const comp = data.find((c) => c.id === id);
+          if (!comp) throw new Error("Not found");
+
+          currentEditId = id;
+          document.getElementById("modalTitle").textContent = "Edit Component";
+          document.getElementById("componentId").value = comp.id;
+          document.getElementById("compName").value = comp.name;
+          document.getElementById("compDesc").value = comp.description || "";
+          document.getElementById("compPrice").value = comp.unitPrice;
+          document.getElementById("compStock").value = comp.stockQuantity;
+          document.getElementById("compCategory").value =
+            comp.category || "General";
+          document.getElementById("saveBtn").textContent = "Update Component";
+
+          // Disable name field while editing
+          document.getElementById("compName").setAttribute("readonly", true);
+          document.getElementById("compName").style.backgroundColor = "#f1f3f5";
+          document.getElementById("compName").style.cursor = "not-allowed";
+
+          // Disable category dropdown while editing
+          document
+            .getElementById("compCategory")
+            .setAttribute("disabled", true);
+          document.getElementById("compCategory").style.backgroundColor =
+            "#f1f3f5";
+          document.getElementById("compCategory").style.cursor = "not-allowed";
+
+          // Show current image filename
+          const display = document.getElementById("currentImageDisplay");
+          if (comp.image_url) {
+            const filename = comp.image_url.split("/").pop();
+            display.innerHTML = `Current image: ${filename}`;
+          } else {
+            display.innerHTML = "No image uploaded";
+          }
+
+          document.getElementById("componentModal").classList.add("active");
+        } catch (error) {
+          alert("Error: " + error.message);
+        }
+      }
+
+      function closeModal() {
+        document.getElementById("componentModal").classList.remove("active");
+      }
+
+      let deleteId = null;
+
+      function deleteComponent(id, name) {
+        deleteId = id;
+        document.getElementById("deleteMsg").textContent = `Delete "${name}"?`;
+        document.getElementById("deleteModal").classList.add("active");
+        document.getElementById("deleteModal").style.display = "flex";
+      }
+
+      function closeDelete() {
+        document.getElementById("deleteModal").classList.remove("active");
+        document.getElementById("deleteModal").style.display = "none";
+        deleteId = null;
+      }
+
+      function confirmDelete() {
+        if (!deleteId) return;
+
+        fetchWithAuth(`/components/${deleteId}`, { method: "DELETE" })
+          .then(() => {
+            closeDelete();
+            loadComponents();
+          })
+          .catch((err) => {
+            alert("Delete failed: " + err.message);
+            closeDelete();
+          });
+      }
+
+      // Upload image to Cloudinary
+      async function uploadImage(file) {
+        const formData = new FormData();
+        formData.append("image", file);
+        const response = await fetch(`${API_BASE}/upload`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+          body: formData,
+        });
+        if (!response.ok) throw new Error("Upload failed");
+        const data = await response.json();
+        return data.url;
+      }
+
+      // Submit add/edit form
+      document
+        .getElementById("componentForm")
+        .addEventListener("submit", async function (e) {
+          e.preventDefault();
+          const id = document.getElementById("componentId").value;
+          const payload = {
+            name: document.getElementById("compName").value.trim(),
+            description: document.getElementById("compDesc").value.trim(),
+            category: document.getElementById("compCategory").value,
+            unitPrice: parseFloat(document.getElementById("compPrice").value),
+            stock: parseInt(document.getElementById("compStock").value),
+          };
+          const fileInput = document.getElementById("compImage");
+          const file = fileInput.files[0];
+          try {
+            if (file) {
+              const imageUrl = await uploadImage(file);
+              payload.image_url = imageUrl;
+            }
+            if (id) {
+              await fetchWithAuth(`/components/${id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+              });
+            } else {
+              await fetchWithAuth("/components", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+              });
+            }
+            closeModal();
+            loadComponents();
+          } catch (error) {
+            alert("Error: " + error.message);
+          }
+        });
+
+      document
+        .getElementById("componentModal")
+        .addEventListener("click", function (e) {
+          if (e.target === this) closeModal();
+        });
+
+      document.addEventListener("DOMContentLoaded", loadComponents);
+    </script>
+
+    <div
+      id="deleteModal"
+      style="
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 999;
+        justify-content: center;
+        align-items: center;
+      "
+    >
+      <div
+        style="
+          background: #fff;
+          padding: 30px;
+          border-radius: 8px;
+          max-width: 400px;
+          text-align: center;
+        "
+      >
+        <h3 style="color: #dc3545">Delete Component?</h3>
+        <p id="deleteMsg" style="margin: 20px 0">Are you sure?</p>
+        <div style="display: flex; gap: 10px; justify-content: center">
+          <button
+            onclick="closeDelete()"
+            style="
+              padding: 8px 25px;
+              border: 1px solid #ccc;
+              background: #fff;
+              border-radius: 4px;
+              cursor: pointer;
+            "
+          >
+            Cancel
+          </button>
+          <button
+            onclick="confirmDelete()"
+            style="
+              padding: 8px 25px;
+              border: none;
+              background: #dc3545;
+              color: #fff;
+              border-radius: 4px;
+              cursor: pointer;
+            "
+          >
+            Delete
+          </button>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

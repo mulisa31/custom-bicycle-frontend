@@ -1,0 +1,426 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Dashboard | CBBS</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+    />
+    <link rel="stylesheet" href="assets/css/styles.css" />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      .main {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 2rem;
+      }
+
+      .section-title {
+        font-size: 1.3rem;
+        font-weight: 600;
+        margin-bottom: 1.2rem;
+        color: #1a2634;
+      }
+
+      .actions-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.2rem;
+        margin-bottom: 2.5rem;
+      }
+
+      .action-card {
+        background: #fff;
+        padding: 1.5rem;
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+        text-align: center;
+        text-decoration: none;
+        color: #1a2634;
+        transition: 0.2s;
+      }
+
+      .action-card:hover {
+        border-color: #3f705f;
+        box-shadow: 0 4px 12px rgba(63, 112, 95, 0.12);
+        transform: translateY(-3px);
+      }
+
+      .action-card i {
+        font-size: 2rem;
+        color: #3f705f;
+        margin-bottom: 0.6rem;
+      }
+
+      .action-card h4 {
+        font-weight: 600;
+        font-size: 1rem;
+      }
+
+      .action-card p {
+        font-size: 0.8rem;
+        color: #6c7a8a;
+        margin-top: 0.2rem;
+      }
+
+      .activity-card {
+        background: #fff;
+        padding: 1.5rem;
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+        margin-bottom: 1.5rem;
+      }
+
+      .activity-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.6rem 0;
+        border-bottom: 1px solid #f0f2f5;
+      }
+
+      .activity-item:last-child {
+        border-bottom: none;
+      }
+
+      .activity-item .activity-text {
+        font-size: 0.95rem;
+      }
+
+      .activity-item .activity-time {
+        font-size: 0.8rem;
+        color: #6c7a8a;
+      }
+
+      .last-updated {
+        text-align: right;
+        font-size: 0.8rem;
+        color: #6c7a8a;
+        margin-top: 0.5rem;
+      }
+
+      .api-section {
+        background: #fff;
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+        padding: 1.5rem;
+        margin-top: 1.5rem;
+      }
+
+      .api-section h3 {
+        font-size: 1.1rem;
+        margin-bottom: 1rem;
+        color: #1a2634;
+      }
+
+      .api-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+      }
+
+      .api-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.6rem 1rem;
+        background: #f8fafc;
+        border-radius: 8px;
+        border: 1px solid #eef2f6;
+      }
+
+      .api-item .dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        display: inline-block;
+        flex-shrink: 0;
+      }
+
+      .api-item .dot.online {
+        background: #28a745;
+      }
+
+      .api-item .dot.offline {
+        background: #dc3545;
+      }
+
+      .api-item .dot.checking {
+        background: #ffc107;
+        animation: pulse 1s infinite;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.4;
+        }
+      }
+
+      .api-item .api-name {
+        font-weight: 500;
+        font-size: 0.9rem;
+        color: #1a2634;
+      }
+
+      .api-item .api-status-text {
+        font-size: 0.8rem;
+        color: #6c7a8a;
+        margin-left: auto;
+      }
+
+      main hr {
+        border: none;
+        border-top: 1px solid #e2e8f0;
+        margin: 0;
+      }
+
+      @media (max-width: 768px) {
+        .main {
+          padding: 1rem;
+        }
+        .api-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .actions-grid {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="header-placeholder"></div>
+    <hr style="color: var(--text-color)" />
+
+    <main class="main">
+      <h1 style="font-size: 1.8rem; margin-bottom: 0.5rem">
+        Welcome, <span id="welcomeName">Admin</span>
+      </h1>
+      <p style="color: #6c7a8a; margin-bottom: 2rem">
+        Manage your store, components, and users from one place.
+      </p>
+
+      <h2 class="section-title">Quick Actions</h2>
+      <div class="actions-grid">
+        <a href="admin-components.html" class="action-card">
+          <i class="fas fa-plus-circle"></i>
+          <h4>Manage Components</h4>
+          <p>Add, edit, or remove bicycle parts</p>
+        </a>
+        <a href="admin-compatibility.html" class="action-card">
+          <i class="fas fa-link"></i>
+          <h4>Compatibility Rules</h4>
+          <p>Set which parts work together</p>
+        </a>
+        <a href="addAdmin.html" class="action-card">
+          <i class="fas fa-user-shield"></i>
+          <h4>Add Admin</h4>
+          <p>Create new administrator accounts</p>
+        </a>
+      </div>
+
+      <div class="activity-card">
+        <h3 style="margin-bottom: 1rem">Recent Activity</h3>
+        <div id="recentActivity">
+          <div class="activity-item">
+            <span class="activity-text">Loading activity...</span>
+            <span class="activity-time"></span>
+          </div>
+        </div>
+        <div class="last-updated" id="lastUpdated"></div>
+      </div>
+
+      <div class="api-section">
+        <h3><i class="fas fa-server"></i> API Connection Status</h3>
+        <div class="api-grid">
+          <div class="api-item">
+            <span class="dot checking" id="apiDot"></span>
+            <span class="api-name">Backend Server</span>
+            <span class="api-status-text" id="apiStatusText">Checking...</span>
+          </div>
+          <div class="api-item">
+            <span class="dot checking" id="dbDot"></span>
+            <span class="api-name">Database</span>
+            <span class="api-status-text" id="dbStatusText">Checking...</span>
+          </div>
+          <div class="api-item">
+            <span class="dot checking" id="authDot"></span>
+            <span class="api-name">Authentication</span>
+            <span class="api-status-text" id="authStatusText">Checking...</span>
+          </div>
+        </div>
+        <div
+          style="
+            margin-top: 0.8rem;
+            font-size: 0.8rem;
+            color: #6c7a8a;
+            text-align: right;
+          "
+          id="apiLastCheck"
+        ></div>
+      </div>
+    </main>
+    <hr style="color: var(--text-color)" />
+    <div id="footer-placeholder"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+    <script src="assets/js/main.js"></script>
+    <script src="assets/js/auth.js"></script>
+    <script src="assets/js/load-components.js"></script>
+
+    <script>
+      // This is the dashboard of the admin
+      // Check if an admin is logged in, otherwise redirect to login
+      const token = localStorage.getItem("token");
+      let user = null;
+      try {
+        const raw = localStorage.getItem("user");
+        if (raw) {
+          user = JSON.parse(raw);
+          if (user && user.user && typeof user.user === "object") {
+            user = user.user;
+          }
+        }
+      } catch (e) {
+        user = null;
+      }
+
+      if (!token || !user || user.role !== "admin") {
+        window.location.href = "login.html";
+      }
+
+      // Show the admin's full name or "Admin"
+      document.getElementById("welcomeName").textContent = user.name || "Admin";
+
+      //  backend URL
+      const API_BASE = "https://custom-bicycle-system-backend.onrender.com/api";
+
+      function updateApiStatus(elementId, status, message) {
+        const dot = document.getElementById(elementId + "Dot");
+        const text = document.getElementById(elementId + "StatusText");
+
+        if (dot) {
+          dot.className = "dot";
+          if (status === "online") dot.classList.add("online");
+          else if (status === "offline") dot.classList.add("offline");
+          else dot.classList.add("checking");
+        }
+        if (text) text.textContent = message || "—";
+      }
+
+      async function checkApiHealth() {
+        const startTime = performance.now();
+
+        updateApiStatus("api", "checking", "Connecting...");
+
+        try {
+          const response = await fetch(`${API_BASE}/health`);
+          const endTime = performance.now();
+          const latency = Math.round(endTime - startTime);
+
+          if (response.ok) {
+            const data = await response.json();
+            updateApiStatus("api", "online", "Online", `${latency}ms`);
+            updateApiStatus("db", "online", "Connected", `${latency}ms`);
+
+            if (token) {
+              updateApiStatus(
+                "auth",
+                "online",
+                "Authenticated",
+                `${latency}ms`,
+              );
+            } else {
+              updateApiStatus("auth", "offline", "No Token", "—");
+            }
+          } else {
+            updateApiStatus("api", "offline", "API Error", "—");
+            updateApiStatus("db", "offline", "Disconnected", "—");
+            updateApiStatus("auth", "offline", "Failed", "—");
+          }
+        } catch (error) {
+          updateApiStatus("api", "offline", "Server Unreachable", "—");
+          updateApiStatus("db", "offline", "Disconnected", "—");
+          updateApiStatus("auth", "offline", "Failed", "—");
+        }
+
+        document.getElementById("apiLastCheck").textContent =
+          `Last checked: ${new Date().toLocaleString()}`;
+      }
+
+      // fetch helper with token header
+      async function fetchWithAuth(endpoint) {
+        const res = await fetch(`${API_BASE}${endpoint}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      }
+
+      // show the last three components as recent activity
+      async function loadRecentActivity() {
+        try {
+          const components = await fetchWithAuth("/components");
+          const activityDiv = document.getElementById("recentActivity");
+          const recentItems = [];
+
+          if (components && components.length > 0) {
+            const latest = components.slice(-3).reverse();
+            latest.forEach((comp) => {
+              recentItems.push({
+                text: `Added component: ${comp.name}`,
+                time: comp.createdAt
+                  ? new Date(comp.createdAt).toLocaleDateString()
+                  : "Today",
+              });
+            });
+          }
+
+          if (recentItems.length === 0) {
+            activityDiv.innerHTML = `<div class="activity-item"><span class="activity-text">No recent activity</span></div>`;
+          } else {
+            activityDiv.innerHTML = recentItems
+              .map(
+                (item) =>
+                  `<div class="activity-item">
+                    <span class="activity-text">${item.text}</span>
+                    <span class="activity-time">${item.time}</span>
+                  </div>`,
+              )
+              .join("");
+          }
+
+          document.getElementById("lastUpdated").textContent =
+            `Last updated: ${new Date().toLocaleString()}`;
+        } catch (error) {
+          console.error("Recent activity error:", error);
+        }
+      }
+
+      // start checks and refresh periodically
+      async function init() {
+        await checkApiHealth();
+        await loadRecentActivity();
+        setInterval(loadRecentActivity, 60000);
+        setInterval(checkApiHealth, 30000);
+      }
+
+      document.addEventListener("DOMContentLoaded", function () {
+        // Wait a bit for header and footer to load
+        setTimeout(init, 500);
+      });
+    </script>
+  </body>
+</html>

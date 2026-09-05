@@ -1,0 +1,492 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Stock Management | CBBS</title>
+    <link rel="stylesheet" href="assets/css/styles.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+    />
+    <style>
+      .stock-container {
+        max-width: 1200px;
+        margin: 2rem auto;
+        padding: 0 1.5rem;
+      }
+      .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+      }
+      .page-header h1 {
+        margin: 0;
+        font-size: 1.8rem;
+        color: #1a2634;
+      }
+      .filter-section {
+        background: #fff;
+        padding: 1.5rem;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+      }
+      .filter-group {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      .filter-group select {
+        padding: 0.5rem 1rem;
+        border: 1px solid #d9ded9;
+        border-radius: 6px;
+        font-family: inherit;
+        font-size: 0.9rem;
+        background: #fff;
+        color: #1a2634;
+        min-width: 180px;
+        cursor: pointer;
+      }
+      .filter-group select:focus {
+        border-color: #3f705f;
+        outline: none;
+      }
+      .filter-group .filter-btn {
+        padding: 0.5rem 1.5rem;
+        background: #3f705f;
+        color: #fff;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: background 0.2s;
+        white-space: nowrap;
+      }
+      .filter-group .filter-btn:hover {
+        background: #2f5a4c;
+      }
+      .filter-group .clear-btn {
+        background: #e2e8f0;
+        color: #2d3f5e;
+      }
+      .filter-group .clear-btn:hover {
+        background: #d0d7e0;
+      }
+      .filter-count {
+        margin-left: auto;
+        font-size: 0.9rem;
+        color: #6c7a8a;
+        white-space: nowrap;
+      }
+      .table-wrap {
+        background: #fff;
+        border-radius: 0.5rem;
+        border: 1px solid #e2e8f0;
+        overflow-x: auto;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.9rem;
+      }
+      th,
+      td {
+        padding: 0.8rem 1rem;
+        text-align: left;
+        border-bottom: 1px solid #edf2f7;
+      }
+      th {
+        background: #f8fafc;
+        font-weight: 600;
+        color: #2d3f5e;
+      }
+      .status-badge {
+        display: inline-block;
+        padding: 0.2rem 0.6rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+      }
+      .status-badge.in-stock {
+        background: #d4edda;
+        color: #155724;
+      }
+      .status-badge.low-stock {
+        background: #fff3cd;
+        color: #856404;
+      }
+      .status-badge.out-of-stock {
+        background: #f8d7da;
+        color: #721c24;
+      }
+      .thumbnail {
+        width: 50px;
+        height: 50px;
+        object-fit: cover;
+        border-radius: 4px;
+        border: 1px solid #e2e8f0;
+      }
+      .thumbnail-placeholder {
+        width: 50px;
+        height: 50px;
+        background: #f1f3f5;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #adb5bd;
+        font-size: 0.7rem;
+      }
+      .stock-input {
+        width: 70px;
+        padding: 0.3rem;
+        border: 1px solid #d9ded9;
+        border-radius: 4px;
+        text-align: center;
+        font-family: inherit;
+      }
+      .btn-update {
+        background: #3f705f;
+        color: #fff;
+        border: none;
+        padding: 0.3rem 0.8rem;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.8rem;
+        font-weight: 600;
+        transition: background 0.2s;
+        margin-left: 0.5rem;
+      }
+      .btn-update:hover {
+        background: #2f5a4c;
+      }
+      .loading-spinner {
+        text-align: center;
+        color: #6c7a8a;
+        padding: 2rem;
+      }
+      .empty-state {
+        text-align: center;
+        color: #999;
+        padding: 2rem;
+      }
+      .message {
+        padding: 10px 14px;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 500;
+        display: none;
+        margin-bottom: 15px;
+      }
+      .message.success {
+        display: block;
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+      }
+      .message.error {
+        display: block;
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+      }
+      .hidden {
+        display: none !important;
+      }
+      @media (max-width: 768px) {
+        .filter-group {
+          flex-direction: column;
+        }
+        .filter-group select,
+        .filter-group button {
+          width: 100%;
+        }
+        .filter-count {
+          margin-left: 0;
+          width: 100%;
+          text-align: center;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="header">
+      <div id="header-placeholder"></div>
+    </header>
+    <hr />
+
+    <main>
+      <div class="stock-container">
+        <div class="page-header">
+          <h1><i class="fas fa-boxes"></i> Stock Management</h1>
+        </div>
+
+        <div id="stockMessage" class="message"></div>
+
+        <div class="filter-section">
+          <div class="filter-group">
+            <select id="filterCategory">
+              <option value="">All Categories</option>
+            </select>
+            <select id="filterStatus">
+              <option value="">All Status</option>
+              <option value="in-stock">In Stock</option>
+              <option value="low-stock">Low Stock</option>
+              <option value="out-of-stock">Out of Stock</option>
+            </select>
+            <button class="filter-btn" onclick="applyFilters()">
+              <i class="fas fa-filter"></i> Apply
+            </button>
+            <button class="filter-btn clear-btn" onclick="clearFilters()">
+              <i class="fas fa-times"></i> Clear
+            </button>
+            <span class="filter-count" id="filterCount"
+              >Showing all components</span
+            >
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Image</th>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Category</th>
+                <th>Price (R)</th>
+                <th>Stock</th>
+                <th>Status</th>
+                <th>Update Stock</th>
+              </tr>
+            </thead>
+            <tbody id="stockBody">
+              <tr>
+                <td colspan="8" class="loading-spinner">
+                  <i class="fas fa-spinner fa-spin"></i> Loading...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <hr />
+    </main>
+
+    <div id="footer-placeholder"></div>
+
+    <script src="assets/js/load-components.js"></script>
+    <script>
+      let allComponents = [];
+      let filteredComponents = [];
+      const user = JSON.parse(localStorage.getItem("user"));
+      const token = localStorage.getItem("token");
+
+      // manager only
+      if (!user || user.role !== "manager") {
+        window.location.href = "login.html";
+      }
+
+      // API URL
+      const API_BASE = "https://custom-bicycle-system-backend.onrender.com/api";
+
+      function fetchWithAuth(endpoint, options = {}) {
+        return fetch(`${API_BASE}${endpoint}`, {
+          ...options,
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+            ...options.headers,
+          },
+        }).then((res) => {
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          return res.json();
+        });
+      }
+
+      function showMessage(text, type) {
+        const el = document.getElementById("stockMessage");
+        el.textContent = text;
+        el.className = "message " + type;
+        setTimeout(() => {
+          el.className = "message";
+          el.textContent = "";
+        }, 4000);
+      }
+
+      // fill category dropdown from components
+      function populateCategoryFilter(components) {
+        const catSelect = document.getElementById("filterCategory");
+        catSelect.innerHTML = '<option value="">All Categories</option>';
+        const categories = [
+          ...new Set(components.map((c) => c.category).filter(Boolean)),
+        ];
+        categories.sort();
+        categories.forEach((cat) => {
+          const option = document.createElement("option");
+          option.value = cat;
+          option.textContent = cat;
+          catSelect.appendChild(option);
+        });
+      }
+
+      // apply selected filters
+      function applyFilters() {
+        const category = document.getElementById("filterCategory").value;
+        const status = document.getElementById("filterStatus").value;
+
+        filteredComponents = allComponents.filter((comp) => {
+          let match = true;
+          if (category) {
+            match = match && comp.category === category;
+          }
+          if (status) {
+            const stock = parseInt(comp.stockQuantity) || 0;
+            if (status === "in-stock") match = match && stock >= 10;
+            else if (status === "low-stock")
+              match = match && stock > 0 && stock < 10;
+            else if (status === "out-of-stock") match = match && stock === 0;
+          }
+          return match;
+        });
+        renderTable();
+      }
+
+      function clearFilters() {
+        document.getElementById("filterCategory").value = "";
+        document.getElementById("filterStatus").value = "";
+        filteredComponents = [...allComponents];
+        renderTable();
+      }
+
+      // render table rows
+      function renderTable() {
+        const tbody = document.getElementById("stockBody");
+        const filterCount = document.getElementById("filterCount");
+
+        if (filteredComponents.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="8" class="empty-state">No components found matching filters.</td></tr>`;
+          filterCount.textContent = "No components found";
+          return;
+        }
+
+        filterCount.textContent = `Showing ${filteredComponents.length} of ${allComponents.length} components`;
+
+        tbody.innerHTML = filteredComponents
+          .map((comp) => {
+            let statusClass = "in-stock";
+            let statusText = "In Stock";
+            if (comp.stockQuantity === 0) {
+              statusClass = "out-of-stock";
+              statusText = "Out of Stock";
+            } else if (comp.stockQuantity < 10) {
+              statusClass = "low-stock";
+              statusText = "Low Stock";
+            }
+
+            // handle cloudinary or local image
+            let imageHtml;
+            if (comp.image_url && comp.image_url.startsWith("http")) {
+              imageHtml = `<img src="${comp.image_url}" class="thumbnail" onerror="this.parentElement.innerHTML='<div class=\'thumbnail-placeholder\'>No img</div>'" />`;
+            } else if (comp.image_url) {
+              imageHtml = `<img src="https://custom-bicycle-system-backend.onrender.com${comp.image_url}" class="thumbnail" onerror="this.parentElement.innerHTML='<div class=\'thumbnail-placeholder\'>No img</div>'" />`;
+            } else {
+              imageHtml = `<div class="thumbnail-placeholder">No image</div>`;
+            }
+
+            return `
+            <tr data-id="${comp.id}" data-name="${comp.name}" data-category="${comp.category || "General"}" data-price="${comp.unitPrice}" data-description="${comp.description || ""}" data-image="${comp.image_url || ""}">
+              <td>${imageHtml}</td>
+              <td>${comp.id}</td>
+              <td><strong>${comp.name}</strong></td>
+              <td>${comp.category || "General"}</td>
+              <td>R${Number(comp.unitPrice).toFixed(2)}</td>
+              <td>${comp.stockQuantity}</td>
+              <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+              <td>
+                <input type="number" class="stock-input" value="${comp.stockQuantity}" min="0" data-id="${comp.id}" />
+                <button class="btn-update" onclick="updateStock(${comp.id})">Update</button>
+              </td>
+            </tr>
+          `;
+          })
+          .join("");
+      }
+
+      // update stock for one component
+      async function updateStock(componentId) {
+        const input = document.querySelector(
+          `.stock-input[data-id="${componentId}"]`,
+        );
+        if (!input) return;
+        const newStock = parseInt(input.value);
+        if (isNaN(newStock) || newStock < 0) {
+          showMessage(
+            "Please enter a valid stock quantity (0 or more).",
+            "error",
+          );
+          return;
+        }
+
+        const comp = allComponents.find((c) => c.id === componentId);
+        if (!comp) return;
+
+        const payload = {
+          name: comp.name,
+          description: comp.description || "",
+          category: comp.category,
+          unitPrice: comp.unitPrice,
+          stock: newStock,
+          image_url: comp.image_url || undefined,
+        };
+
+        try {
+          await fetchWithAuth(`/components/${componentId}`, {
+            method: "PUT",
+            body: JSON.stringify(payload),
+          });
+          comp.stockQuantity = newStock;
+          renderTable();
+          showMessage(
+            `Stock for "${comp.name}" updated to ${newStock}.`,
+            "success",
+          );
+        } catch (error) {
+          console.error("Update error:", error);
+          showMessage("Failed to update stock: " + error.message, "error");
+        }
+      }
+
+      // load components from API
+      async function loadComponents() {
+        const tbody = document.getElementById("stockBody");
+        tbody.innerHTML = `<tr><td colspan="8" class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> Loading...</td></tr>`;
+        try {
+          const data = await fetchWithAuth("/components");
+          allComponents = Array.isArray(data) ? data : [];
+          filteredComponents = [...allComponents];
+
+          if (allComponents.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="8" class="empty-state">No components found.</td></tr>`;
+            return;
+          }
+
+          populateCategoryFilter(allComponents);
+          renderTable();
+        } catch (error) {
+          console.error("Load error:", error);
+          tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:#dc3545;">Failed to load components.</td></tr>`;
+        }
+      }
+
+      document.addEventListener("DOMContentLoaded", loadComponents);
+    </script>
+  </body>
+</html>
