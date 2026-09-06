@@ -2,9 +2,9 @@
 
 A web application for building custom bicycles from individual components. Customers can select parts, check compatibility, place orders, and track them. Staff roles (admin, manager, clerk) manage components, orders, stock, and reports.
 
-## Demo
+## Live Demo
 
-Frontend: [Live Site](https://your-frontend.netlify.app)  
+Frontend: [CBBS Live Site](https://cbbs.netlify.app/index.html)  
 Backend API: [https://custom-bicycle-system-backend.onrender.com](https://custom-bicycle-system-backend.onrender.com)
 
 ## Features
@@ -38,3 +38,48 @@ Backend API: [https://custom-bicycle-system-backend.onrender.com](https://custom
 ## Setup (Local Development)
 
 1. Clone this repository:
+git clone https://github.com/mulisa31/custom-bicycle-frontend.git
+
+2. Open `index.html` in a browser or use a static server.
+
+3. Ensure the backend is running. Update the `API_BASE` in all JS/HTML files if needed:
+
+4. Start the backend server (separate repo) and configure the database and Cloudinary.
+   
+
+## Deployment
+
+### Frontend (Netlify)
+
+- Push this repository to GitHub.
+- In Netlify, choose "Import from Git".
+- Select the repository.
+- Leave build command empty (static site).
+- Set publish directory to `.` (or the folder containing `index.html`).
+- Deploy.
+
+### Backend (Render)
+
+- Push the backend repository to GitHub.
+- Create a Web Service on Render.
+- Set build command: `npm install`
+- Start command: `npm start`
+- Add environment variables:
+- `DATABASE_URL` – Neon connection string
+- `JWT_SECRET` – any long secret
+- `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`
+- `NODE_ENV=production`
+
+## Template Attribution
+
+This project was adapted from the open-source e-commerce template:
+
+[Evara E-commerce](https://billalben.github.io/evara-ecommerce/)
+
+Several pages were modified, and new features were added to support the custom bicycle building system.
+
+## Notes
+
+- Component images are stored on Cloudinary. Uploads from the admin panel will automatically use Cloudinary.
+- The backend is hosted on Render and may take a few seconds to wake up after idle periods.
+- This project is for educational purposes.
