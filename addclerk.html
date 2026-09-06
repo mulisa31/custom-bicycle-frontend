@@ -211,7 +211,7 @@
         const user = JSON.parse(localStorage.getItem("user"));
         const token = localStorage.getItem("token");
 
-        if (!token || !user || user.role !== "admin") {
+        if (!token || !user || user.role !== "clerk") {
           window.location.href = "index.html";
           return;
         }
