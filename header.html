@@ -1,6 +1,6 @@
 <nav class="nav container">
   <a href="index.html" class="nav__logo" id="nav-logo">
-    <img class="nav__logo-img" src="assets/img/logo.svg" alt=" logo" />
+    <img class="nav__logo-img" src="assets/img/logo.svg" alt="CBBS Logo" />
   </a>
 
   <div class="nav__menu" id="nav-menu">
@@ -14,15 +14,12 @@
     </div>
 
     <ul class="nav__list">
-      <!-- main links everyone sees -->
       <li class="nav__item" id="nav-home">
         <a href="index.html" class="nav__link active-link">Home</a>
       </li>
       <li class="nav__item" id="nav-shop">
         <a href="shop.html" class="nav__link">Browse Components</a>
       </li>
-
-      <!-- customer pages -->
       <li class="nav__item" id="nav-build-bike" style="display: none">
         <a href="build-your-bicycle.html" class="nav__link">Build Bicycle</a>
       </li>
@@ -32,8 +29,6 @@
       <li class="nav__item" id="nav-order-history" style="display: none">
         <a href="order-history.html" class="nav__link">My Orders</a>
       </li>
-
-      <!-- clerk links -->
       <li class="nav__item" id="nav-clerk-orders" style="display: none">
         <a href="clerk-manage-orders.html" class="nav__link">Orders</a>
       </li>
@@ -46,8 +41,6 @@
       <li class="nav__item" id="nav-add-clerk" style="display: none">
         <a href="addclerk.html" class="nav__link">Add Clerk</a>
       </li>
-
-      <!-- admin links -->
       <li class="nav__item" id="nav-admin" style="display: none">
         <a href="dashboard.html" class="nav__link">Dashboard</a>
       </li>
@@ -60,8 +53,6 @@
       <li class="nav__item" id="nav-add-admin" style="display: none">
         <a href="addAdmin.html" class="nav__link">Add Admin</a>
       </li>
-
-      <!-- manager links -->
       <li class="nav__item" id="nav-manager-stock" style="display: none">
         <a href="manager-stock.html" class="nav__link">Stock</a>
       </li>
@@ -71,8 +62,6 @@
       <li class="nav__item" id="nav-add-manager" style="display: none">
         <a href="addManager.html" class="nav__link">Add Manager</a>
       </li>
-
-      <!-- auth links -->
       <li class="nav__item" id="nav-register">
         <a href="registerCustomer.html" class="nav__link">Register</a>
       </li>
@@ -87,4 +76,26 @@
       </li>
     </ul>
   </div>
+
+  <div class="nav__toggle" id="nav-toggle">
+    <img src="./assets/img/menu-burger.svg" alt="Open menu" />
+  </div>
 </nav>
+
+<script>
+  const navMenu = document.getElementById("nav-menu");
+  const navToggle = document.getElementById("nav-toggle");
+  const navClose = document.getElementById("nav-close");
+
+  if (navToggle) {
+    navToggle.addEventListener("click", () => {
+      navMenu.classList.add("show-menu");
+    });
+  }
+
+  if (navClose) {
+    navClose.addEventListener("click", () => {
+      navMenu.classList.remove("show-menu");
+    });
+  }
+</script>

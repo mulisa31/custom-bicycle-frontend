@@ -1,16 +1,33 @@
-// Load header and footer, then update navigation based on user role.
+// load header and footer, then update navigation based on user role.
 
 document.addEventListener('DOMContentLoaded', function() {
     const headerElement = document.getElementById('header-placeholder');
     if (!headerElement) return;
 
-    // fetch header.html and insert it into the page
+    // fetch header.html and insert it
     fetch('header.html')
         .then(res => res.text())
         .then(html => {
             headerElement.innerHTML = html;
 
-            // get user and token from localStorage
+            // mobile menu toggle
+            const navMenu = document.getElementById('nav-menu');
+            const navToggle = document.getElementById('nav-toggle');
+            const navClose = document.getElementById('nav-close');
+
+            if (navToggle && navMenu) {
+                navToggle.addEventListener('click', () => {
+                    navMenu.classList.add('show-menu');
+                });
+            }
+
+            if (navClose && navMenu) {
+                navClose.addEventListener('click', () => {
+                    navMenu.classList.remove('show-menu');
+                });
+            }
+
+            // get user from storage
             let user = null;
             try {
                 user = JSON.parse(localStorage.getItem('user'));
@@ -20,7 +37,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             const token = localStorage.getItem('token');
 
-            // store all nav elements
+            // all nav elements
             const navShop = document.getElementById('nav-shop');
             const navLogo = document.getElementById('nav-logo');
             const navLogin = document.getElementById('nav-login');
@@ -43,7 +60,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const navAddClerk = document.getElementById('nav-add-clerk');
             const navAddManager = document.getElementById('nav-add-manager');
 
-            // hide all nav items first
+            // hide all first
             const allNavItems = [
                 navLogin, navRegister, navLogo, navLogout, navBuildBike, navHome,
                 navMyAccount, navMyCart, navOrderHistory, navClerkOrders,
@@ -53,13 +70,13 @@ document.addEventListener('DOMContentLoaded', function() {
             ];
             allNavItems.forEach(el => { if (el) el.style.display = 'none'; });
 
-            // show home and shop for guests and customers only
+            // show home and shop for guests and customers
             if (!user || user.role === 'customer') {
                 if (navHome) navHome.style.display = 'inline-block';
                 if (navShop) navShop.style.display = 'inline-block';
             }
 
-            // make the logo clickable only for customers and guests
+            // logo clickable only for customers and guests
             if (navLogo) {
                 navLogo.style.display = 'inline-block';
                 if (user && (user.role === 'admin' || user.role === 'clerk' || user.role === 'manager')) {
@@ -68,13 +85,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
 
-            // show links based on logged-in user role
+            // show links based on role
             if (user && token) {
-                // logged in: show logout and profile links
                 if (navLogout) navLogout.style.display = 'inline-block';
                 if (navMyAccount) navMyAccount.style.display = 'inline-block';
 
-                // role-specific links
                 if (user.role === 'customer') {
                     if (navBuildBike) navBuildBike.style.display = 'inline-block';
                     if (navMyCart) navMyCart.style.display = 'inline-block';
@@ -95,7 +110,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (navAddAdmin) navAddAdmin.style.display = 'inline-block';
                 }
             } else {
-                // not logged in: show login and register
                 if (navLogin) navLogin.style.display = 'inline-block';
                 if (navRegister) navRegister.style.display = 'inline-block';
             }
@@ -103,14 +117,14 @@ document.addEventListener('DOMContentLoaded', function() {
         .catch(err => console.error('Header load error:', err));
 });
 
-// logout function: clear session and go to home page
+// logout function
 function handleLogout() {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     window.location.href = 'index.html';
 }
 
-// load footer.html and insert it into the page
+// load footer
 const footerElement = document.getElementById('footer-placeholder');
 if (footerElement) {
     fetch('footer.html')
