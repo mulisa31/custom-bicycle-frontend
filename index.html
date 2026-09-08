@@ -331,6 +331,25 @@
 
     <script>
       document.addEventListener("DOMContentLoaded", function () {
+        // Wait for header to load, then attach menu toggle events
+        const waitForHeader = setInterval(() => {
+          const navToggle = document.getElementById("nav-toggle");
+          const navClose = document.getElementById("nav-close");
+          const navMenu = document.getElementById("nav-menu");
+
+          if (navToggle && navClose && navMenu) {
+            clearInterval(waitForHeader);
+
+            navToggle.addEventListener("click", () => {
+              navMenu.classList.add("show-menu");
+            });
+
+            navClose.addEventListener("click", () => {
+              navMenu.classList.remove("show-menu");
+            });
+          }
+        }, 200);
+
         // backend URL
         const API_BASE =
           "https://custom-bicycle-system-backend.onrender.com/api";
