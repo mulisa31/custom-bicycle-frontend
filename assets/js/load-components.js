@@ -1,16 +1,16 @@
-// load header and footer, then update navigation based on user role.
+// load header and footer, then show/hide nav items based on user role
 
 document.addEventListener('DOMContentLoaded', function() {
     const headerElement = document.getElementById('header-placeholder');
     if (!headerElement) return;
 
-    // fetch header.html and insert it
+    // fetch header.html and insert it into the page
     fetch('header.html')
         .then(res => res.text())
         .then(html => {
             headerElement.innerHTML = html;
 
-            // mobile menu toggle
+            // mobile menu toggle - must be after header is in DOM
             const navMenu = document.getElementById('nav-menu');
             const navToggle = document.getElementById('nav-toggle');
             const navClose = document.getElementById('nav-close');
@@ -27,7 +27,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
             }
 
-            // get user from storage
+            // get user from localStorage
             let user = null;
             try {
                 user = JSON.parse(localStorage.getItem('user'));
