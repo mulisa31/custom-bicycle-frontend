@@ -119,6 +119,12 @@
         justify-content: center;
         align-items: center;
       }
+
+      #cartItemsModal table th,
+      #cartItemsModal table td {
+        text-align: left !important;
+      }
+
       .confirm-box {
         background: #fff;
         padding: 25px;
@@ -187,7 +193,7 @@
             <thead>
               <tr>
                 <th>Cart ID</th>
-                <th>SubTotal</th>
+                <th>Cart Total</th>
                 <th>Action</th>
               </tr>
             </thead>
@@ -214,48 +220,11 @@
           <i class="fi fi-rs-fingerprint"></i>
         </div>
 
-        <div class="cart__group grid hidden" id="cartGroupSection">
-          <div>
-            <div class="cart__shippinp">
-              <h3 class="section__title">Shipping Details</h3>
-              <form class="form grid" id="shippingForm">
-                <div class="form__group grid">
-                  <input
-                    type="text"
-                    class="form__input"
-                    placeholder="Province"
-                    id="shippingProvince"
-                    required
-                  />
-                  <input
-                    type="text"
-                    class="form__input"
-                    placeholder="City"
-                    id="shippingCity"
-                    required
-                  />
-                </div>
-                <div class="form__group grid">
-                  <input
-                    type="text"
-                    class="form__input"
-                    placeholder="Postal Code"
-                    id="shippingPostcode"
-                    required
-                  />
-                  <input
-                    type="text"
-                    class="form__input"
-                    placeholder="Street Address"
-                    id="shippingAddress"
-                    required
-                  />
-                </div>
-                <div class="form__btn"></div>
-              </form>
-            </div>
-          </div>
-
+        <div
+          class="cart__group grid hidden"
+          id="cartGroupSection"
+          style="grid-template-columns: 1fr !important"
+        >
           <div class="cart__total">
             <h3 class="section__title">Cart Totals</h3>
             <table class="cart__total-table">
@@ -312,19 +281,17 @@
       const API_BASE = "https://custom-bicycle-system-backend.onrender.com/api";
       const token = localStorage.getItem("token");
 
-      // We'll store cart data here
+      // We store cart data here
       let allCarts = [];
       let allCartItems = [];
       let deleteCartId = null;
 
-      // Show a message in the cart area (success/error/empty)
       function showMessage(text, type) {
         const el = document.getElementById("cartMessage");
         el.textContent = text;
         el.className = "cart-message " + type;
       }
 
-      // Fetch wrapper that adds the token
       function fetchWithAuth(endpoint, options = {}) {
         return fetch(`${API_BASE}${endpoint}`, {
           ...options,
@@ -339,7 +306,6 @@
         });
       }
 
-      // Show the empty cart state
       function showEmptyCart() {
         const tbody = document.getElementById("cartItemsBody");
         tbody.innerHTML = "";
@@ -348,8 +314,6 @@
         document.getElementById("checkoutBtn").disabled = true;
         document.getElementById("dividerSection").classList.add("hidden");
         document.getElementById("cartGroupSection").classList.add("hidden");
-
-        // Show the Build button when cart is empty
         document.getElementById("cartActions").classList.remove("hidden");
 
         const el = document.getElementById("cartMessage");
@@ -360,14 +324,12 @@
         `;
       }
 
-      // Show the cart with items
       function showCartWithItems() {
         document.getElementById("cartActions").classList.add("hidden");
         document.getElementById("dividerSection").classList.remove("hidden");
         document.getElementById("cartGroupSection").classList.remove("hidden");
       }
 
-      // Load the user's active cart
       async function loadCarts() {
         const tbody = document.getElementById("cartItemsBody");
 
@@ -398,16 +360,11 @@
 
           allCartItems = cart.CartItems;
 
-          // Group items by cart ID (usually only one)
           const cartsMap = {};
           cart.CartItems.forEach((item) => {
             const cartId = cart.id;
             if (!cartsMap[cartId]) {
-              cartsMap[cartId] = {
-                cartId: cartId,
-                items: [],
-                subtotal: 0,
-              };
+              cartsMap[cartId] = { cartId: cartId, items: [], subtotal: 0 };
             }
             cartsMap[cartId].items.push(item);
             cartsMap[cartId].subtotal +=
@@ -457,7 +414,7 @@
         }
       }
 
-      // View cart items in a modal
+      // View cart items modal
       function viewCart(cartId) {
         const existingModal = document.getElementById("cartItemsModal");
         if (existingModal) existingModal.remove();
@@ -480,45 +437,64 @@
           align-items: center;
         `;
 
-        let itemsHtml = cartEntry.items
-          .map(
-            (item) => `
-            <tr style="border-bottom:1px solid #f0f2f5;">
-              <td style="padding:8px;">${item.Component.name}</td>
-              <td style="padding:8px;">${item.Component.category || "General"}</td>
-              <td style="padding:8px;">R${Number(item.Component.unitPrice).toFixed(2)}</td>
-            </tr>
-          `,
-          )
-          .join("");
+        const bikeGroups = {};
+        cartEntry.items.forEach((item) => {
+          const groupId = item.bicycleGroupId || "unknown";
+          if (!bikeGroups[groupId]) bikeGroups[groupId] = [];
+          bikeGroups[groupId].push(item);
+        });
 
-        modal.innerHTML = `
-          <div style="background:#fff;padding:25px;border-radius:10px;max-width:600px;width:90%;max-height:80vh;overflow-y:auto;">
-            <h3 style="margin-top:0;color:#1a2634;">Cart #${cartId} Items</h3>
+        let modalBody = `<h3 style="margin-top:0;color:#1a2634;">Cart #${cartId} Items</h3>`;
+        let fullTotal = 0;
+
+        Object.keys(bikeGroups).forEach((groupId, index) => {
+          const items = bikeGroups[groupId];
+          let bikeSubtotal = 0;
+          items.forEach((item) => {
+            bikeSubtotal +=
+              Number(item.Component.unitPrice) * (item.quantity || 1);
+          });
+          fullTotal += bikeSubtotal;
+
+          modalBody += `
+            <h4 style="margin:15px 0 5px;color:#3f705f;">Bike ${index + 1} <small>(ID: ${groupId.substring(0, 8)})</small></h4>
             <table style="width:100%;border-collapse:collapse;font-size:0.9rem;">
-              <thead>
-                <tr style="border-bottom:2px solid #e2e8f0;">
-                  <th style="text-align:left;padding:8px;">Component</th>
-                  <th style="text-align:left;padding:8px;">Category</th>
-                  <th style="text-align:left;padding:8px;">Price</th>
-                </tr>
-              </thead>
-              <tbody>${itemsHtml}</tbody>
-            </table>
-            <div style="margin-top:15px;text-align:right;font-weight:700;">Subtotal: R${cartEntry.subtotal.toFixed(2)}</div>
-            <div style="margin-top:15px;text-align:right;">
-              <button onclick="document.getElementById('cartItemsModal').remove()" style="padding:8px 20px;background:#3f705f;color:#fff;border:none;border-radius:5px;cursor:pointer;font-family:inherit;">Close</button>
-            </div>
+              <thead><tr><th>Category</th><th>Component</th><th>Price</th></tr></thead>
+              <tbody>
+          `;
+          items.forEach((item) => {
+            modalBody += `
+              <tr>
+                <td>${item.Component.category || "General"}</td>
+                <td>${item.Component.name}</td>
+                <td>R${Number(item.Component.unitPrice).toFixed(2)}</td>
+              </tr>
+            `;
+          });
+          modalBody += `</tbody></table>`;
+
+          if (Object.keys(bikeGroups).length > 1) {
+            modalBody += `<div style="text-align:right;font-weight:600;margin-top:5px;">Subtotal: R${bikeSubtotal.toFixed(2)}</div>`;
+          }
+        });
+
+        modalBody += `
+          <div style="margin-top:20px;padding:15px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;text-align:right;">
+            <span style="font-size:0.9rem;color:#2d3f5e;font-weight:600;">Full Total</span>
+            <span style="font-size:1.5rem;font-weight:700;color:#1a2634;margin-left:10px;">R${fullTotal.toFixed(2)}</span>
+          </div>
+          <div style="margin-top:15px;text-align:right;">
+            <button onclick="document.getElementById('cartItemsModal').remove()" style="padding:8px 20px;background:#3f705f;color:#fff;border:none;border-radius:5px;cursor:pointer;">Close</button>
           </div>
         `;
 
+        modal.innerHTML = `<div style="background:#fff;padding:25px;border-radius:10px;max-width:650px;width:90%;max-height:80vh;overflow-y:auto;">${modalBody}</div>`;
         document.body.appendChild(modal);
         modal.addEventListener("click", function (e) {
           if (e.target === this) this.remove();
         });
       }
 
-      // Show delete confirmation modal
       function showDeleteConfirm(cartId) {
         deleteCartId = cartId;
         const existingModal = document.getElementById("deleteConfirmModal");
@@ -564,31 +540,24 @@
         }
       }
 
-      // Place order: creates order, reduces stock, clears cart
       async function placeOrder() {
         const checkoutBtn = document.getElementById("checkoutBtn");
-
-        // Stop if already processing
         if (checkoutBtn.disabled) return;
 
-        const province = document
-          .getElementById("shippingProvince")
-          .value.trim();
-        const city = document.getElementById("shippingCity").value.trim();
-        const postcode = document
-          .getElementById("shippingPostcode")
-          .value.trim();
-        const address = document.getElementById("shippingAddress").value.trim();
+        const user = JSON.parse(localStorage.getItem("user") || "{}");
+        const province = user.province || "";
+        const city = user.city || "";
+        const postcode = user.postalCode || "";
+        const address = user.address || "";
 
         if (!province || !city || !postcode || !address) {
           showMessage(
-            "Please fill in all shipping details before placing your order.",
+            "Please update your profile with your full address before placing an order.",
             "error",
           );
           return;
         }
 
-        // Disable button to avoid many orders
         checkoutBtn.disabled = true;
         checkoutBtn.textContent = "Placing Order...";
 
@@ -599,7 +568,6 @@
           });
           const totalPrice = subtotal + 10;
 
-          // 1. Create the order
           await fetchWithAuth("/orders", {
             method: "POST",
             body: JSON.stringify({
@@ -611,7 +579,6 @@
             }),
           });
 
-          // 2. Reduce stock for each component
           for (let item of allCartItems) {
             const componentId = item.componentId || item.Component?.id;
             if (componentId) {
@@ -622,13 +589,9 @@
             }
           }
 
-          // 3. Clear the cart
           await fetchWithAuth("/cart/clear", { method: "DELETE" });
-
-          // 4. Update cart status
           await fetchWithAuth("/cart/checkout", { method: "PUT" });
 
-          // Save shipping details for order history
           localStorage.setItem(
             "shippingDetails",
             JSON.stringify({ province, city, postcode, address }),
@@ -651,14 +614,6 @@
       document
         .getElementById("checkoutBtn")
         .addEventListener("click", placeOrder);
-
-      document
-        .getElementById("shippingForm")
-        .addEventListener("submit", function (e) {
-          e.preventDefault();
-          showMessage("Shipping details saved.", "success");
-        });
-
       document.addEventListener("DOMContentLoaded", loadCarts);
     </script>
   </body>

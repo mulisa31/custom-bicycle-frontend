@@ -148,6 +148,48 @@
       .btn-save:hover {
         background: #2f5a4c;
       }
+      .btn-ship {
+        background: #d1ecf1;
+        color: #0c5460;
+        border: none;
+        padding: 0.3rem 0.8rem;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.8rem;
+        font-weight: 600;
+        transition: background 0.2s;
+      }
+      .btn-ship:hover {
+        background: #bee5eb;
+      }
+      .btn-complete {
+        background: #d4edda;
+        color: #155724;
+        border: none;
+        padding: 0.3rem 0.8rem;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.8rem;
+        font-weight: 600;
+        transition: background 0.2s;
+      }
+      .btn-complete:hover {
+        background: #c3e6cb;
+      }
+      .btn-view {
+        background: #cce5ff;
+        color: #004085;
+        border: none;
+        padding: 0.3rem 0.8rem;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.8rem;
+        font-weight: 600;
+        transition: background 0.2s;
+      }
+      .btn-view:hover {
+        background: #b3d9ff;
+      }
       .message {
         padding: 10px 14px;
         border-radius: 6px;
@@ -175,6 +217,63 @@
       }
       .hidden {
         display: none !important;
+      }
+
+      /* Modal styles */
+      .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 999;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      .modal-box {
+        background: #fff;
+        padding: 25px;
+        border-radius: 10px;
+        max-width: 650px;
+        width: 90%;
+        max-height: 80vh;
+        overflow-y: auto;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+      }
+      .modal-box h3 {
+        margin: 0 0 15px 0;
+        color: #1a2634;
+      }
+      .modal-box table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.9rem;
+      }
+      .modal-box table th,
+      .modal-box table td {
+        padding: 8px;
+        text-align: left;
+        border-bottom: 1px solid #f0f2f5;
+      }
+      .modal-box table th {
+        background: #f8fafc;
+        font-weight: 600;
+        color: #2d3f5e;
+      }
+      .modal-close {
+        margin-top: 15px;
+        text-align: right;
+      }
+      .modal-close button {
+        padding: 8px 20px;
+        background: #3f705f;
+        color: #fff;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-family: inherit;
       }
     </style>
   </head>
@@ -215,11 +314,12 @@
                 <th>Date</th>
                 <th>Status</th>
                 <th>Update</th>
+                <th>View</th>
               </tr>
             </thead>
             <tbody id="ordersBody">
               <tr>
-                <td colspan="6" class="loading">
+                <td colspan="7" class="loading">
                   <i class="fas fa-spinner fa-spin"></i> Loading...
                 </td>
               </tr>
@@ -232,19 +332,30 @@
 
     <div id="footer-placeholder"></div>
 
+    <!-- View Items Modal -->
+    <div id="orderItemsModal" class="modal-overlay hidden">
+      <div class="modal-box">
+        <h3 id="modalTitle">Order Items</h3>
+        <div id="modalBody"></div>
+        <div class="modal-close">
+          <button onclick="closeOrderItemsModal()">Close</button>
+        </div>
+      </div>
+    </div>
+
     <script src="assets/js/load-components.js"></script>
     <script>
-      // Base URL for the  API
+      // Base URL for the API
       const API_BASE = "https://custom-bicycle-system-backend.onrender.com/api";
       const token = localStorage.getItem("token");
       const user = JSON.parse(localStorage.getItem("user") || "null");
 
-      // Only clerks are allowed to see and manage orders
+      // Only clerks can access this page
       if (!token || !user || user.role !== "clerk") {
         window.location.href = "login.html";
       }
 
-      // We'll store all orders here, plus a filtered version
+      // Store all orders and filtered orders
       let allOrders = [];
       let filteredOrders = [];
 
@@ -263,7 +374,7 @@
         });
       }
 
-      // Show a temporary message at the top (success/error)
+      // Show a temporary message at the top
       function showMessage(text, type) {
         const el = document.getElementById("orderMessage");
         el.textContent = text;
@@ -274,7 +385,7 @@
         }, 4000);
       }
 
-      // Format a date string to something like "Sep 4, 2026"
+      // Format a date string
       function formatDate(dateString) {
         if (!dateString) return "N/A";
         return new Date(dateString).toLocaleDateString("en-ZA", {
@@ -288,22 +399,20 @@
       function renderOrders(orders) {
         const tbody = document.getElementById("ordersBody");
         if (orders.length === 0) {
-          tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;">No orders found</td></tr>`;
+          tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;">No orders found</td></tr>`;
           return;
         }
 
         tbody.innerHTML = orders
           .map((order) => {
-            // Show the customer name if available, otherwise fallback to user ID
             const customer = order.User
               ? order.User.name
               : `User #${order.userId}`;
             const status = order.status || "pending";
 
-            // The update cell changes depending on the current status
+            // Update cell content based on status
             let updateCell = "";
             if (status === "pending") {
-              // Pending orders can be moved to assembling
               updateCell = `
                 <select class="status-select" data-id="${order.id}">
                   <option value="pending" selected>Pending</option>
@@ -311,13 +420,16 @@
                 </select>
                 <button class="btn-save" onclick="updateStatus(${order.id})">Save</button>
               `;
-            } else if (status === "completed") {
-              // Completed orders can be shipped again
+            } else if (status === "ready") {
               updateCell = `
-                <button class="btn-save" onclick="shipOrder(${order.id})">Ship</button>
+                <button class="btn-ship" onclick="markShipped(${order.id})">Mark Shipped</button>
+              `;
+            } else if (status === "shipped") {
+              updateCell = `
+                <button class="btn-complete" onclick="markCompleted(${order.id})">Mark Completed</button>
               `;
             } else {
-              // Other statuses are read-only
+              // assembling or completed - read-only
               updateCell = `<span class="status-badge ${status}">${status}</span>`;
             }
 
@@ -329,6 +441,9 @@
                 <td>${formatDate(order.createdAt)}</td>
                 <td><span class="status-badge ${status}">${status}</span></td>
                 <td>${updateCell}</td>
+                <td>
+                  <button class="btn-view" onclick="viewOrderItems(${order.id})">View Items</button>
+                </td>
               </tr>
             `;
           })
@@ -353,7 +468,7 @@
         renderOrders(filteredOrders);
       }
 
-      // Update an order's status from the dropdown (only pending -> assembling)
+      // Update order status (pending -> assembling)
       async function updateStatus(orderId) {
         const select = document.querySelector(
           `.status-select[data-id="${orderId}"]`,
@@ -362,12 +477,10 @@
         const newStatus = select.value;
 
         try {
-          // Call backend to update status
           await fetchWithAuth(`/orders/${orderId}/status`, {
             method: "PUT",
             body: JSON.stringify({ status: newStatus }),
           });
-          // Update local copy so table reflects change
           const order = allOrders.find((o) => o.id === orderId);
           if (order) order.status = newStatus;
           applyFilter();
@@ -378,8 +491,8 @@
         }
       }
 
-      // Ship a completed order (sets status to shipped)
-      async function shipOrder(orderId) {
+      // Mark ready order as shipped (fulfilment)
+      async function markShipped(orderId) {
         try {
           await fetchWithAuth(`/orders/${orderId}/status`, {
             method: "PUT",
@@ -388,17 +501,110 @@
           const order = allOrders.find((o) => o.id === orderId);
           if (order) order.status = "shipped";
           applyFilter();
-          showMessage(`Order #${orderId} shipped.`, "success");
+          showMessage(`Order #${orderId} marked as shipped.`, "success");
         } catch (error) {
           console.error("Ship error:", error);
           showMessage("Failed to ship order: " + error.message, "error");
         }
       }
 
+      // Mark shipped order as completed (finalize)
+      async function markCompleted(orderId) {
+        try {
+          await fetchWithAuth(`/orders/${orderId}/status`, {
+            method: "PUT",
+            body: JSON.stringify({ status: "completed" }),
+          });
+          const order = allOrders.find((o) => o.id === orderId);
+          if (order) order.status = "completed";
+          applyFilter();
+          showMessage(`Order #${orderId} marked as completed.`, "success");
+        } catch (error) {
+          console.error("Complete order error:", error);
+          showMessage("Failed to complete order: " + error.message, "error");
+        }
+      }
+
+      // Open order items modal grouped by bicycle
+      function viewOrderItems(orderId) {
+        const order = allOrders.find((o) => o.id === orderId);
+        if (!order) return;
+
+        const modal = document.getElementById("orderItemsModal");
+        const title = document.getElementById("modalTitle");
+        const body = document.getElementById("modalBody");
+
+        title.textContent = `Order #${order.id} Items`;
+
+        // group order items by bicycleGroupId
+        const bikeGroups = {};
+        (order.OrderItems || []).forEach((item) => {
+          const groupId = item.bicycleGroupId || "unknown";
+          if (!bikeGroups[groupId]) bikeGroups[groupId] = [];
+          bikeGroups[groupId].push(item);
+        });
+
+        let html = "";
+        let fullTotal = 0;
+
+        Object.keys(bikeGroups).forEach((groupId, index) => {
+          const items = bikeGroups[groupId];
+          let bikeSubtotal = 0;
+
+          items.forEach((item) => {
+            bikeSubtotal +=
+              Number(item.Component.unitPrice) * (item.quantity || 1);
+          });
+          fullTotal += bikeSubtotal;
+
+          html += `
+            <h4 style="margin:15px 0 5px;color:#3f705f;">Bike ${index + 1} <small style="font-weight:400;">(ID: ${groupId.substring(0, 8)})</small></h4>
+            <table>
+              <thead>
+                <tr>
+                  <th>Category</th>
+                  <th>Component</th>
+                  <th>Price</th>
+                </tr>
+              </thead>
+              <tbody>
+          `;
+          items.forEach((item) => {
+            html += `
+              <tr>
+                <td>${item.Component ? item.Component.category || "General" : "N/A"}</td>
+                <td>${item.Component ? item.Component.name : "Unknown"}</td>
+                <td>R${item.Component ? Number(item.Component.unitPrice).toFixed(2) : "0.00"}</td>
+              </tr>
+            `;
+          });
+          html += `</tbody></table>`;
+
+          if (Object.keys(bikeGroups).length > 1) {
+            html += `<div style="text-align:right;font-weight:600;margin-top:5px;">Subtotal: R${bikeSubtotal.toFixed(2)}</div>`;
+          }
+        });
+
+        html += `
+          <div style="margin-top:20px;padding:15px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;text-align:right;">
+            <span style="font-size:0.9rem;color:#2d3f5e;font-weight:600;">Full Total</span>
+            <span style="font-size:1.5rem;font-weight:700;color:#1a2634;margin-left:10px;">R${fullTotal.toFixed(2)}</span>
+          </div>
+        `;
+
+        body.innerHTML = html;
+        modal.classList.remove("hidden");
+      }
+
+      // Close order items modal
+      function closeOrderItemsModal() {
+        document.getElementById("orderItemsModal").classList.add("hidden");
+      }
+
       // Load all orders from the backend
       async function loadOrders() {
         const tbody = document.getElementById("ordersBody");
-        tbody.innerHTML = `<tr><td colspan="6" class="loading"><i class="fas fa-spinner fa-spin"></i> Loading...</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" class="loading"><i class="fas fa-spinner fa-spin"></i> Loading...</td></tr>`;
         try {
           const orders = await fetchWithAuth("/orders/all");
           allOrders = Array.isArray(orders) ? orders : [];
@@ -406,7 +612,7 @@
           renderOrders(filteredOrders);
         } catch (error) {
           console.error("Load error:", error);
-          tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:#dc3545;">Failed to load orders</td></tr>`;
+          tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:#dc3545;">Failed to load orders</td></tr>`;
         }
       }
 

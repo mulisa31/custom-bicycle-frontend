@@ -276,7 +276,42 @@
               <option value="Track">Track Bike</option>
               <option value="Other">Other</option>
             </select>
-
+            <div class="cb-register-field">
+              <label for="reg-address">Street Address</label>
+              <input
+                type="text"
+                id="reg-address"
+                name="address"
+                placeholder="Enter your street address"
+              />
+            </div>
+            <div class="cb-register-field">
+              <label for="reg-province">Province</label>
+              <input
+                type="text"
+                id="reg-province"
+                name="province"
+                placeholder="Enter your province"
+              />
+            </div>
+            <div class="cb-register-field">
+              <label for="reg-city">City</label>
+              <input
+                type="text"
+                id="reg-city"
+                name="city"
+                placeholder="Enter your city"
+              />
+            </div>
+            <div class="cb-register-field">
+              <label for="reg-postal">Postal Code</label>
+              <input
+                type="text"
+                id="reg-postal"
+                name="postalCode"
+                placeholder="Enter your postal code"
+              />
+            </div>
             <div class="cb-register-field">
               <label for="reg-contact">Phone Number *</label>
               <input
@@ -334,6 +369,10 @@
           const email = document.getElementById("reg-email").value.trim();
           const password = document.getElementById("reg-password").value;
           const confirm = document.getElementById("reg-confirm").value;
+          const address = document.getElementById("reg-address").value.trim();
+          const province = document.getElementById("reg-province").value.trim();
+          const city = document.getElementById("reg-city").value.trim();
+          const postalCode = document.getElementById("reg-postal").value.trim();
           const contact = document.getElementById("reg-contact").value.trim();
 
           const role = document.getElementById("reg-role")?.value || "customer";
@@ -359,6 +398,10 @@
                   contact: contact,
                   role: role,
                   preference: preference,
+                  address: address,
+                  province: province,
+                  city: city,
+                  postalCode: postalCode,
                 }),
               },
             );

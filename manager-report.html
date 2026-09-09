@@ -57,6 +57,7 @@
         border: 1px solid #e2e8f0;
         overflow-x: auto;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        margin-bottom: 2rem;
       }
       table {
         width: 100%;
@@ -93,9 +94,6 @@
         text-align: center;
         color: #6c7a8a;
         padding: 2rem;
-      }
-      .hidden {
-        display: none !important;
       }
     </style>
   </head>
@@ -137,8 +135,8 @@
           </div>
         </div>
 
-        <!-- Recent orders table -->
-        <h2 style="margin-bottom: 1rem">Recent Orders</h2>
+        <!-- Recent orders -->
+        <h2>Recent Orders</h2>
         <div class="table-wrap">
           <table>
             <thead>
@@ -151,31 +149,67 @@
             </thead>
             <tbody id="recentOrdersBody">
               <tr>
-                <td colspan="4" class="loading">
-                  <i class="fas fa-spinner fa-spin"></i> Loading...
-                </td>
+                <td colspan="4" class="loading">Loading...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Popular components -->
+        <h2>Popular Components</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Category</th>
+                <th>Component</th>
+                <th>Total Ordered</th>
+              </tr>
+            </thead>
+            <tbody id="popularComponentsBody">
+              <tr>
+                <td colspan="3" class="loading">Loading...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Sales trends -->
+        <h2>Sales Trends</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Total Orders</th>
+                <th>Total Revenue</th>
+              </tr>
+            </thead>
+            <tbody id="salesTrendsBody">
+              <tr>
+                <td colspan="3" class="loading">Loading...</td>
               </tr>
             </tbody>
           </table>
         </div>
       </div>
-      <hr />
     </main>
-
+    <hr />
     <div id="footer-placeholder"></div>
 
     <script src="assets/js/load-components.js"></script>
     <script>
-      // live API URL
+      // live API
       const API_BASE = "https://custom-bicycle-system-backend.onrender.com/api";
       const token = localStorage.getItem("token");
       const user = JSON.parse(localStorage.getItem("user") || "null");
 
-      // only managers can see reports
+      // only managers can view reports
       if (!token || !user || user.role !== "manager") {
         window.location.href = "login.html";
       }
 
+      // fetch with token
       function fetchWithAuth(endpoint) {
         return fetch(`${API_BASE}${endpoint}`, {
           headers: { Authorization: `Bearer ${token}` },
@@ -185,15 +219,26 @@
         });
       }
 
+      // format date as day-month-year
+      function formatDateDMY(dateString) {
+        if (!dateString) return "N/A";
+        const date = new Date(dateString);
+        const day = String(date.getDate()).padStart(2, "0");
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const year = date.getFullYear();
+        return `${day}-${month}-${year}`;
+      }
+
+      // load all report data
       async function loadReports() {
         try {
-          // get orders and components at the same time
-          const [orders, components] = await Promise.all([
+          const [orders, components, popularity, sales] = await Promise.all([
             fetchWithAuth("/orders/all"),
             fetchWithAuth("/components"),
+            fetchWithAuth("/reports/popularity"),
+            fetchWithAuth("/reports/sales"),
           ]);
 
-          // calculate summary numbers
           const totalOrders = orders.length;
           const totalRevenue = orders.reduce(
             (sum, o) => sum + (Number(o.totalPrice) || 0),
@@ -204,7 +249,6 @@
             (c) => c.stockQuantity < 10,
           ).length;
 
-          // update the cards
           document.getElementById("totalOrders").textContent = totalOrders;
           document.getElementById("totalRevenue").textContent =
             `R${totalRevenue.toFixed(2)}`;
@@ -212,20 +256,57 @@
             totalComponents;
           document.getElementById("lowStockCount").textContent = lowStockCount;
 
-          // show the last 10 orders
+          // recent orders
           const recent = orders.slice(0, 10);
-          const tbody = document.getElementById("recentOrdersBody");
+          const recentBody = document.getElementById("recentOrdersBody");
           if (recent.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;">No orders yet</td></tr>`;
+            recentBody.innerHTML = `<tr><td colspan="4" class="loading">No orders yet</td></tr>`;
           } else {
-            tbody.innerHTML = recent
+            recentBody.innerHTML = recent
               .map(
                 (order) => `
               <tr>
                 <td><strong>#${order.id}</strong></td>
                 <td><span class="status-badge ${order.status || "pending"}">${order.status || "pending"}</span></td>
                 <td>R${Number(order.totalPrice || 0).toFixed(2)}</td>
-                <td>${order.createdAt ? new Date(order.createdAt).toLocaleDateString() : "N/A"}</td>
+                <td>${formatDateDMY(order.createdAt)}</td>
+              </tr>
+            `,
+              )
+              .join("");
+          }
+
+          // popular components
+          const popBody = document.getElementById("popularComponentsBody");
+          if (popularity.length === 0) {
+            popBody.innerHTML = `<tr><td colspan="3" class="loading">No data</td></tr>`;
+          } else {
+            popBody.innerHTML = popularity
+              .map((item) => {
+                const comp = item.Component || {};
+                return `
+                <tr>
+                  <td>${comp.category || "N/A"}</td>
+                  <td>${comp.name || "Unknown"}</td>
+                  <td>${item.totalOrdered || 0}</td>
+                </tr>
+              `;
+              })
+              .join("");
+          }
+
+          // sales trends
+          const salesBody = document.getElementById("salesTrendsBody");
+          if (sales.length === 0) {
+            salesBody.innerHTML = `<tr><td colspan="3" class="loading">No data</td></tr>`;
+          } else {
+            salesBody.innerHTML = sales
+              .map(
+                (day) => `
+              <tr>
+                <td>${formatDateDMY(day.date)}</td>
+                <td>${day.totalOrders || 0}</td>
+                <td>R${Number(day.totalRevenue || 0).toFixed(2)}</td>
               </tr>
             `,
               )
@@ -234,7 +315,7 @@
         } catch (error) {
           console.error("Report load error:", error);
           document.getElementById("recentOrdersBody").innerHTML =
-            `<tr><td colspan="4" style="text-align:center;color:#dc3545;">Failed to load reports</td></tr>`;
+            `<tr><td colspan="4" class="loading">Failed to load reports</td></tr>`;
         }
       }
 

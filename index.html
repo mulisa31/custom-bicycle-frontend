@@ -483,13 +483,13 @@
 
               container.innerHTML = popular.map(createProductCard).join("");
 
-              // Check if a Swiper instance already exists for the Popular section.
-              // If it does, destroy it first to prevent duplicate sliders from stacking.
+              // for Popular Components , Check if a Swiper instance already exists
+
               if (window.swiperPopular)
                 window.swiperPopular.destroy(true, true);
 
-              // Initialise a new Swiper instance for the Popular Components carousel.
-              // Uses the same structure and options as the New Arrivals section.
+              // for Popular Components carousel, Initialise a new Swiper instance
+
               window.swiperPopular = initSwiper(
                 "#popularSection .new__container",
                 "#popularSection .swiper-button-next",

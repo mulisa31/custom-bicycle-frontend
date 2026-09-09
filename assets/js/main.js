@@ -1,18 +1,5 @@
 // Menu show/hide functionality
 
-// open the mobile menu when toggle button is clicked
-if (navToggle) {
-  navToggle.addEventListener("click", () => {
-    navMenu.classList.add("show-menu");
-  });
-}
-
-// close the mobile menu when close button is clicked
-if (navClose) {
-  navClose.addEventListener("click", () => {
-    navMenu.classList.remove("show-menu");
-  });
-}
 
 // Image gallery: clicking small images changes the main product image
 function imgGallery() {

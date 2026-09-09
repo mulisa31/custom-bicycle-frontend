@@ -95,6 +95,10 @@
         color: #155724;
         font-weight: 700;
       }
+      #orderItemsModal table th,
+      #orderItemsModal table td {
+        text-align: left !important;
+      }
       .hidden {
         display: none !important;
       }
@@ -102,6 +106,97 @@
         max-width: 200px;
         word-break: break-word;
         font-size: 0.85rem;
+      }
+      .btn-delete {
+        background: #f8d7da;
+        color: #721c24;
+        border: none;
+        padding: 0.4rem 1rem;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.85rem;
+        transition: background 0.2s;
+        margin-left: 0.5rem;
+      }
+      .btn-delete:hover {
+        background: #f5c6cb;
+      }
+      .btn-cancel {
+        background: #ffeeba;
+        color: #856404;
+        border: none;
+        padding: 0.4rem 1rem;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.85rem;
+        transition: background 0.2s;
+        margin-left: 0.5rem;
+      }
+      .btn-cancel:hover {
+        background: #ffc107;
+        color: #000;
+      }
+
+      /* confirmation modal */
+      .confirm-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 999;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      .confirm-box {
+        background: #fff;
+        padding: 25px;
+        border-radius: 10px;
+        max-width: 400px;
+        width: 90%;
+        text-align: center;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+      }
+      .confirm-box h3 {
+        margin: 0 0 10px 0;
+        color: #1a2634;
+        font-size: 1.2rem;
+      }
+      .confirm-box p {
+        margin: 0 0 20px 0;
+        color: #555;
+        font-size: 0.95rem;
+        line-height: 1.5;
+      }
+      .confirm-actions {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+      }
+      .confirm-actions button {
+        padding: 8px 20px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-family: inherit;
+        font-weight: 600;
+        font-size: 0.9rem;
+      }
+      .btn-confirm-delete {
+        background: #dc3545;
+        color: #fff;
+      }
+      .btn-confirm-delete:hover {
+        background: #c82333;
+      }
+      .btn-confirm-cancel {
+        background: #e2e8f0;
+        color: #2d3f5e;
+      }
+      .btn-confirm-cancel:hover {
+        background: #d0d7e0;
       }
     </style>
   </head>
@@ -150,6 +245,22 @@
       <div id="footer-placeholder"></div>
     </footer>
 
+    <!-- confirmation modal for order actions -->
+    <div id="confirmOrderModal" class="confirm-overlay hidden">
+      <div class="confirm-box">
+        <h3 id="confirmOrderTitle">Confirm</h3>
+        <p id="confirmOrderMsg">Are you sure?</p>
+        <div class="confirm-actions">
+          <button class="btn-confirm-cancel" onclick="closeConfirmOrder()">
+            Cancel
+          </button>
+          <button class="btn-confirm-delete" onclick="confirmOrderAction()">
+            Confirm
+          </button>
+        </div>
+      </div>
+    </div>
+
     <script src="assets/js/main.js"></script>
     <script src="assets/js/auth.js"></script>
     <script src="assets/js/load-components.js"></script>
@@ -161,7 +272,10 @@
       const token = localStorage.getItem("token");
       let allOrders = [];
 
-      // show a  message at the top of the orders area
+      // pending action data
+      let pendingOrderAction = null;
+
+      // show a message at the top of the orders area
       function showMessage(text, type) {
         const el = document.getElementById("orderMessage");
         el.textContent = text;
@@ -218,7 +332,7 @@
         });
       }
 
-      // join shipping fields into one  line
+      // join shipping fields into one line
       function buildAddress(order) {
         const parts = [];
         if (order.shippingAddress) parts.push(order.shippingAddress);
@@ -258,6 +372,14 @@
             const statusClass = order.status || "pending";
             const address = buildAddress(order);
 
+            let actionButtons = `<button class="btn-view" onclick="viewOrderItems(${order.id})">View Items</button>`;
+            if (order.status === "completed") {
+              actionButtons += `<button class="btn-delete" onclick="requestDeleteOrder(${order.id})">Delete Order</button>`;
+            }
+            if (order.status === "pending") {
+              actionButtons += `<button class="btn-cancel" onclick="requestCancelOrder(${order.id})">Cancel Order</button>`;
+            }
+
             html += `
               <tr>
                 <td><strong>#${order.id}</strong></td>
@@ -265,9 +387,7 @@
                 <td>R${Number(order.totalPrice || 0).toFixed(2)}</td>
                 <td class="address-cell">${address}</td>
                 <td>${formatDate(order.createdAt)}</td>
-                <td>
-                  <button class="btn-view" onclick="viewOrderItems(${order.id})">View Items</button>
-                </td>
+                <td>${actionButtons}</td>
               </tr>
             `;
           });
@@ -291,7 +411,7 @@
         }
       }
 
-      // open modal with ordered components
+      // open modal with ordered components grouped by each bicycle
       function viewOrderItems(orderId) {
         const order = allOrders.find((o) => o.id === orderId);
         if (!order) return;
@@ -314,47 +434,130 @@
           align-items: center;
         `;
 
-        let itemsHtml = "";
-        if (order.OrderItems && order.OrderItems.length > 0) {
-          itemsHtml = order.OrderItems.map(
-            (item) => `
-            <tr style="border-bottom:1px solid #f0f2f5;">
-              <td style="padding:8px;">${item.Component ? item.Component.name : "Unknown"}</td>
-              <td style="padding:8px;">${item.Component ? item.Component.category || "General" : "N/A"}</td>
-              <td style="padding:8px;">R${item.Component ? Number(item.Component.unitPrice).toFixed(2) : "0.00"}</td>
-            </tr>
-          `,
-          ).join("");
-        } else {
-          itemsHtml = `<tr><td colspan="3" style="padding:8px;text-align:center;">No items found for this order.</td></tr>`;
-        }
+        const bikeGroups = {};
+        (order.OrderItems || []).forEach((item) => {
+          const groupId = item.bicycleGroupId || "unknown";
+          if (!bikeGroups[groupId]) bikeGroups[groupId] = [];
+          bikeGroups[groupId].push(item);
+        });
 
-        modal.innerHTML = `
-          <div style="background:#fff;padding:25px;border-radius:10px;max-width:600px;width:90%;max-height:80vh;overflow-y:auto;">
-            <h3 style="margin-top:0;color:#1a2634;">Order #${order.id} Items</h3>
+        let modalBody = `
+          <h3 style="margin-top:0;color:#1a2634;">Order #${order.id} Items</h3>
+        `;
+
+        let fullTotal = 0;
+
+        Object.keys(bikeGroups).forEach((groupId, index) => {
+          const items = bikeGroups[groupId];
+          let bikeSubtotal = 0;
+
+          items.forEach((item) => {
+            bikeSubtotal +=
+              Number(item.Component.unitPrice) * (item.quantity || 1);
+          });
+          fullTotal += bikeSubtotal;
+
+          modalBody += `
+            <h4 style="margin:15px 0 5px;color:#3f705f;">Bike ${index + 1} <small style="font-weight:400;">(ID: ${groupId.substring(0, 8)})</small></h4>
             <table style="width:100%;border-collapse:collapse;font-size:0.9rem;">
               <thead>
                 <tr style="border-bottom:2px solid #e2e8f0;">
-                  <th style="text-align:left;padding:8px;">Component</th>
                   <th style="text-align:left;padding:8px;">Category</th>
+                  <th style="text-align:left;padding:8px;">Component</th>
                   <th style="text-align:left;padding:8px;">Price</th>
                 </tr>
               </thead>
-              <tbody>${itemsHtml}</tbody>
+              <tbody>
+          `;
+
+          items.forEach((item) => {
+            modalBody += `
+              <tr style="border-bottom:1px solid #f0f2f5;">
+                <td style="padding:8px;">${item.Component ? item.Component.category || "General" : "N/A"}</td>
+                <td style="padding:8px;">${item.Component ? item.Component.name : "Unknown"}</td>
+                <td style="padding:8px;">R${item.Component ? Number(item.Component.unitPrice).toFixed(2) : "0.00"}</td>
+              </tr>
+            `;
+          });
+
+          modalBody += `
+              </tbody>
             </table>
-            <div style="margin-top:15px;text-align:right;">
-              <button onclick="document.getElementById('orderItemsModal').remove()"
-                style="padding:8px 20px;background:#3f705f;color:#fff;border:none;border-radius:5px;cursor:pointer;font-family:inherit;">
-                Close
-              </button>
-            </div>
+          `;
+
+          if (Object.keys(bikeGroups).length > 1) {
+            modalBody += `
+              <div style="text-align:right;font-weight:600;margin-top:5px;">Subtotal: R${bikeSubtotal.toFixed(2)}</div>
+            `;
+          }
+        });
+
+        modalBody += `
+          <div style="margin-top:20px;padding:15px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;text-align:right;">
+            <span style="font-size:0.9rem;color:#2d3f5e;font-weight:600;">Full Total</span>
+            <span style="font-size:1.5rem;font-weight:700;color:#1a2634;margin-left:10px;">R${fullTotal.toFixed(2)}</span>
+          </div>
+          <div style="margin-top:15px;text-align:right;">
+            <button onclick="document.getElementById('orderItemsModal').remove()" style="padding:8px 20px;background:#3f705f;color:#fff;border:none;border-radius:5px;cursor:pointer;font-family:inherit;">Close</button>
           </div>
         `;
 
+        modal.innerHTML = `<div style="background:#fff;padding:25px;border-radius:10px;max-width:650px;width:90%;max-height:80vh;overflow-y:auto;">${modalBody}</div>`;
         document.body.appendChild(modal);
+
         modal.addEventListener("click", function (e) {
           if (e.target === this) this.remove();
         });
+      }
+
+      // show custom confirmation modal for delete
+      function requestDeleteOrder(orderId) {
+        pendingOrderAction = { type: "delete", orderId };
+        document.getElementById("confirmOrderTitle").textContent =
+          "Delete Order";
+        document.getElementById("confirmOrderMsg").textContent =
+          "Hide this order from your history? This cannot be undone.";
+        document.getElementById("confirmOrderModal").classList.remove("hidden");
+      }
+
+      // show custom confirmation modal for cancel
+      function requestCancelOrder(orderId) {
+        pendingOrderAction = { type: "cancel", orderId };
+        document.getElementById("confirmOrderTitle").textContent =
+          "Cancel Order";
+        document.getElementById("confirmOrderMsg").textContent =
+          "Cancel this order? This will permanently remove it.";
+        document.getElementById("confirmOrderModal").classList.remove("hidden");
+      }
+
+      // close confirmation modal
+      function closeConfirmOrder() {
+        document.getElementById("confirmOrderModal").classList.add("hidden");
+        pendingOrderAction = null;
+      }
+
+      // execute action after confirmation
+      async function confirmOrderAction() {
+        if (!pendingOrderAction) return;
+
+        const { type, orderId } = pendingOrderAction;
+        closeConfirmOrder();
+
+        try {
+          if (type === "delete") {
+            await fetchWithAuth(`/orders/${orderId}/hide`, { method: "PUT" });
+            showMessage("Order removed from history.", "success");
+          } else if (type === "cancel") {
+            await fetchWithAuth(`/orders/${orderId}/cancel`, {
+              method: "DELETE",
+            });
+            showMessage("Order cancelled.", "success");
+          }
+          await loadOrders();
+        } catch (error) {
+          console.error("Order action error:", error);
+          showMessage("Failed to complete action: " + error.message, "error");
+        }
       }
 
       document.addEventListener("DOMContentLoaded", loadOrders);

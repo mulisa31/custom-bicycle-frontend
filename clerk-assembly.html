@@ -105,6 +105,7 @@
       .hidden {
         display: none !important;
       }
+
       /* Modal styles */
       .modal-overlay {
         position: fixed;
@@ -122,7 +123,7 @@
         background: #fff;
         padding: 25px;
         border-radius: 10px;
-        max-width: 500px;
+        max-width: 650px;
         width: 90%;
         max-height: 80vh;
         overflow-y: auto;
@@ -206,15 +207,7 @@
     <div id="itemsModal" class="modal-overlay hidden">
       <div class="modal-box">
         <h3 id="modalTitle">Order Items</h3>
-        <table>
-          <thead>
-            <tr>
-              <th>Category</th>
-              <th>Component</th>
-            </tr>
-          </thead>
-          <tbody id="modalItemsBody"></tbody>
-        </table>
+        <div id="modalBody"></div>
         <div class="modal-close">
           <button onclick="closeItemsModal()">Close</button>
         </div>
@@ -233,7 +226,7 @@
         window.location.href = "login.html";
       }
 
-      // We'll keep a list of orders that are being assembled
+      // Store orders currently being assembled
       let assemblingOrders = [];
 
       // Fetch wrapper that adds the token header
@@ -251,7 +244,7 @@
         });
       }
 
-      // Show a short message at the top, success orerror
+      // Show a short message at the top
       function showMessage(text, type) {
         const el = document.getElementById("assemblyMessage");
         el.textContent = text;
@@ -298,33 +291,73 @@
         }
       }
 
-      // Open modal and show the components in an order
+      // Show order items grouped by bicycle with totals
       function viewItems(orderId) {
         const order = assemblingOrders.find((o) => o.id === orderId);
         if (!order) return;
 
-        const items = order.OrderItems || [];
         const modalTitle = document.getElementById("modalTitle");
-        const modalBody = document.getElementById("modalItemsBody");
+        const modalBody = document.getElementById("modalBody");
 
         modalTitle.textContent = `Order #${order.id} Items`;
 
-        if (items.length === 0) {
-          modalBody.innerHTML = `<tr><td colspan="2" style="text-align:center;">No items found</td></tr>`;
-        } else {
-          modalBody.innerHTML = items
-            .map((item) => {
-              const comp = item.Component || {};
-              return `
-                <tr>
-                  <td>${comp.category || "N/A"}</td>
-                  <td>${comp.name || "Unknown"}</td>
-                </tr>
-              `;
-            })
-            .join("");
-        }
+        // group order items by bicycleGroupId
+        const bikeGroups = {};
+        (order.OrderItems || []).forEach((item) => {
+          const groupId = item.bicycleGroupId || "unknown";
+          if (!bikeGroups[groupId]) bikeGroups[groupId] = [];
+          bikeGroups[groupId].push(item);
+        });
 
+        let html = "";
+        let fullTotal = 0;
+
+        Object.keys(bikeGroups).forEach((groupId, index) => {
+          const items = bikeGroups[groupId];
+          let bikeSubtotal = 0;
+
+          items.forEach((item) => {
+            bikeSubtotal +=
+              Number(item.Component.unitPrice) * (item.quantity || 1);
+          });
+          fullTotal += bikeSubtotal;
+
+          html += `
+            <h4 style="margin:15px 0 5px;color:#3f705f;">Bike ${index + 1} <small style="font-weight:400;">(ID: ${groupId.substring(0, 8)})</small></h4>
+            <table>
+              <thead>
+                <tr>
+                  <th>Category</th>
+                  <th>Component</th>
+                  <th>Price</th>
+                </tr>
+              </thead>
+              <tbody>
+          `;
+          items.forEach((item) => {
+            html += `
+              <tr>
+                <td>${item.Component ? item.Component.category || "General" : "N/A"}</td>
+                <td>${item.Component ? item.Component.name : "Unknown"}</td>
+                <td>R${item.Component ? Number(item.Component.unitPrice).toFixed(2) : "0.00"}</td>
+              </tr>
+            `;
+          });
+          html += `</tbody></table>`;
+
+          if (Object.keys(bikeGroups).length > 1) {
+            html += `<div style="text-align:right;font-weight:600;margin-top:5px;">Subtotal: R${bikeSubtotal.toFixed(2)}</div>`;
+          }
+        });
+
+        html += `
+          <div style="margin-top:20px;padding:15px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;text-align:right;">
+            <span style="font-size:0.9rem;color:#2d3f5e;font-weight:600;">Full Total</span>
+            <span style="font-size:1.5rem;font-weight:700;color:#1a2634;margin-left:10px;">R${fullTotal.toFixed(2)}</span>
+          </div>
+        `;
+
+        modalBody.innerHTML = html;
         document.getElementById("itemsModal").classList.remove("hidden");
       }
 

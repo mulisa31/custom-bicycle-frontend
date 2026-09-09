@@ -82,6 +82,12 @@ function saveSession(token, user) {
         name: sessionUser.name || sessionUser.fullName || sessionUser.username || "",
         email: sessionUser.email,
         role: sessionUser.role,
+        contact: sessionUser.contact,
+        address: sessionUser.address,
+        province: sessionUser.province,
+        city: sessionUser.city,
+        postalCode: sessionUser.postalCode,
+        preference: sessionUser.preference,
       }),
     );
   }

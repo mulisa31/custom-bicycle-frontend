@@ -59,12 +59,14 @@ document.addEventListener('DOMContentLoaded', function() {
             const navHome = document.getElementById('nav-home');
             const navAddClerk = document.getElementById('nav-add-clerk');
             const navAddManager = document.getElementById('nav-add-manager');
+           const navAdminOrders = document.getElementById('nav-admin-orders');
+           const navAdminCustomers = document.getElementById('nav-admin-customers');
 
             // hide all first
             const allNavItems = [
-                navLogin, navRegister, navLogo, navLogout, navBuildBike, navHome,
+                navLogin, navRegister, navLogo, navLogout, navBuildBike, navHome,navAdminOrders,
                 navMyAccount, navMyCart, navOrderHistory, navClerkOrders,
-                navClerkAssembly, navClerkFulfillment, navAdmin,
+                navClerkAssembly, navClerkFulfillment, navAdmin,navAdminCustomers,
                 navAdminComponents, navAdminCompatibility, navAddAdmin, navAddClerk, navAddManager,
                 navManagerStock, navManagerReports, navShop
             ];
@@ -108,6 +110,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (navAdminComponents) navAdminComponents.style.display = 'inline-block';
                     if (navAdminCompatibility) navAdminCompatibility.style.display = 'inline-block';
                     if (navAddAdmin) navAddAdmin.style.display = 'inline-block';
+                    if (navAddAdmin) navAdminOrders.style.display = 'inline-block';
+                    if (navAdminCustomers) navAdminCustomers.style.display = 'inline-block';
                 }
             } else {
                 if (navLogin) navLogin.style.display = 'inline-block';

@@ -14,6 +14,7 @@
     <link rel="stylesheet" href="./assets/css/styles.css" />
     <title>Build Your Bike | CBBS</title>
     <style>
+      /* (unchanged styles) */
       .cb-builder-page {
         width: 100%;
         min-height: 100vh;
@@ -620,6 +621,7 @@
       let allComponents = [];
       let allCategories = [];
       const selectedComponents = {};
+      let cartAdded = false; // whether the current selection has been added to cart
 
       // Fetch wrapper that includes the auth token
       function fetchWithAuth(endpoint) {
@@ -631,8 +633,7 @@
         });
       }
 
-      // Get the right image URL. Cloudinary returns full URLs, so this mostly
-      // just passes them through. Local images also work if needed.
+      // Get the right image URL. Cloudinary returns full URLs
       function getImageUrl(comp) {
         if (comp.image_url && comp.image_url.startsWith("http")) {
           return comp.image_url;
@@ -645,63 +646,63 @@
       // Build the HTML for one category section
       function createCategorySection(category, components) {
         return `
-          <div class="cb-builder-section-card">
-            <div class="cb-builder-section-top">
-              <h2 class="cb-builder-section-title">${category}</h2>
-              <span class="cb-builder-required">Required</span>
-            </div>
-            <div class="cb-builder-options" data-category="${category}">
-              ${components
-                .map(
-                  (comp) => `
-                    <label class="cb-builder-option ${
-                      comp.stockQuantity === 0 ? "cb-disabled" : ""
-                    }" data-component='${JSON.stringify(comp).replace(/'/g, "&#39;")}'>
-                      <input
-                        type="radio"
-                        name="${category}"
-                        value="${comp.id}"
-                        data-price="${comp.unitPrice}"
-                        data-stock="${comp.stockQuantity}"
-                        ${comp.stockQuantity === 0 ? "disabled" : ""}
-                      />
-                      <div class="cb-builder-option-image">
-                        ${
-                          comp.image_url
-                            ? `<img src="${getImageUrl(comp)}" onerror="this.style.display='none'" />`
-                            : "🚲"
-                        }
-                      </div>
-                      <div class="cb-builder-option-content">
-                        <h3 class="cb-builder-option-name">${comp.name}</h3>
-                        <p class="cb-builder-option-description">${
-                          comp.description || "No description available"
-                        }</p>
-                        <div class="cb-builder-option-bottom">
-                          <span class="cb-builder-option-price">R${Number(comp.unitPrice).toFixed(2)}</span>
-                          <span class="cb-builder-stock ${
-                            comp.stockQuantity === 0
-                              ? "cb-builder-stock-out"
-                              : comp.stockQuantity < 5
-                                ? "cb-builder-stock-low"
-                                : "cb-builder-stock-ok"
-                          }">
-                            ${
-                              comp.stockQuantity === 0
-                                ? "Out of Stock"
-                                : comp.stockQuantity + " left"
-                            }
-                          </span>
-                        </div>
-                      </div>
-                      <span class="cb-builder-check">✓</span>
-                    </label>
-                  `,
-                )
-                .join("")}
-            </div>
-          </div>
-        `;
+                <div class="cb-builder-section-card">
+                  <div class="cb-builder-section-top">
+                    <h2 class="cb-builder-section-title">${category}</h2>
+                    <span class="cb-builder-required">Required</span>
+                  </div>
+                  <div class="cb-builder-options" data-category="${category}">
+                    ${components
+                      .map(
+                        (comp) => `
+                          <label class="cb-builder-option ${
+                            comp.stockQuantity === 0 ? "cb-disabled" : ""
+                          }" data-component='${JSON.stringify(comp).replace(/'/g, "&#39;")}'>
+                            <input
+                              type="radio"
+                              name="${category}"
+                              value="${comp.id}"
+                              data-price="${comp.unitPrice}"
+                              data-stock="${comp.stockQuantity}"
+                              ${comp.stockQuantity === 0 ? "disabled" : ""}
+                            />
+                            <div class="cb-builder-option-image">
+                              ${
+                                comp.image_url
+                                  ? `<img src="${getImageUrl(comp)}" onerror="this.style.display='none'" />`
+                                  : "🚲"
+                              }
+                            </div>
+                            <div class="cb-builder-option-content">
+                              <h3 class="cb-builder-option-name">${comp.name}</h3>
+                              <p class="cb-builder-option-description">${
+                                comp.description || "No description available"
+                              }</p>
+                              <div class="cb-builder-option-bottom">
+                                <span class="cb-builder-option-price">R${Number(comp.unitPrice).toFixed(2)}</span>
+                                <span class="cb-builder-stock ${
+                                  comp.stockQuantity === 0
+                                    ? "cb-builder-stock-out"
+                                    : comp.stockQuantity < 5
+                                      ? "cb-builder-stock-low"
+                                      : "cb-builder-stock-ok"
+                                }">
+                                  ${
+                                    comp.stockQuantity === 0
+                                      ? "Out of Stock"
+                                      : comp.stockQuantity + " left"
+                                  }
+                                </span>
+                              </div>
+                            </div>
+                            <span class="cb-builder-check">✓</span>
+                          </label>
+                        `,
+                      )
+                      .join("")}
+                  </div>
+                </div>
+              `;
       }
 
       // Load components from the API and render category sections
@@ -744,6 +745,27 @@
                 const comp = JSON.parse(
                   this.dataset.component.replace(/&#39;/g, "'"),
                 );
+
+                // If already added to cart and user picks a different component,
+                // reset the add-to-cart state.
+                const prev = selectedComponents[category];
+                if (cartAdded && prev && prev.id !== comp.id) {
+                  // Remove View Cart button and reset Add button
+                  const viewBtn = document.getElementById("viewCartBtn");
+                  if (viewBtn) viewBtn.remove();
+
+                  const addBtn = document.getElementById("cbAddButton");
+                  addBtn.textContent = "Add Custom Bike to Cart";
+                  addBtn.style.display = ""; // clear inline display:none if set
+                  addBtn.classList.remove("show"); // updateSummary will re-add if needed
+                  addBtn.disabled = true; // will be enabled by updateSummary
+
+                  const msg = document.getElementById("cartMessage");
+                  msg.textContent = "";
+                  msg.className = "cart-message";
+
+                  cartAdded = false;
+                }
 
                 // Save selected component for this category
                 selectedComponents[category] = {
@@ -791,7 +813,8 @@
         }
       }
 
-      // Check the two required pairs: Frame+Fork and Tires+Wheels
+      // Check the two required pairs: Frame + Fork and Tires + Wheels
+
       async function checkBackendCompatibility() {
         const comps = Object.values(selectedComponents);
 
@@ -800,18 +823,15 @@
         const tires = comps.find((c) => c.category === "Tires");
         const wheels = comps.find((c) => c.category === "Wheels");
 
+        let issues = [];
+
         // Check Frame + Fork
         if (frame && fork) {
           const result = await checkPair(frame.id, fork.id);
           if (result.compatible === false) {
-            return {
-              compatible: false,
-              compA: frame,
-              compB: fork,
-              reason:
-                result.reason ||
-                `"${frame.name}" is not compatible with "${fork.name}".`,
-            };
+            issues.push(
+              `"${frame.name}" is not compatible with "${fork.name}".`,
+            );
           }
         }
 
@@ -819,17 +839,15 @@
         if (tires && wheels) {
           const result = await checkPair(tires.id, wheels.id);
           if (result.compatible === false) {
-            return {
-              compatible: false,
-              compA: tires,
-              compB: wheels,
-              reason:
-                result.reason ||
-                `"${tires.name}" is not compatible with "${wheels.name}".`,
-            };
+            issues.push(
+              `"${tires.name}" is not compatible with "${wheels.name}".`,
+            );
           }
         }
 
+        if (issues.length > 0) {
+          return { compatible: false, reasons: issues };
+        }
         return { compatible: true };
       }
 
@@ -860,24 +878,24 @@
             const comp = selectedComponents[cat];
             total += comp.price;
             item.innerHTML = `
-              <span class="cb-builder-selected-item-name">${cat}: ${comp.name}</span>
-              <span class="cb-builder-selected-item-price">R${comp.price.toFixed(2)}</span>
-            `;
+                    <span class="cb-builder-selected-item-name">${cat}: ${comp.name}</span>
+                    <span class="cb-builder-selected-item-price">R${comp.price.toFixed(2)}</span>
+                  `;
           } else {
             allSelected = false;
             if (!hasStock) {
               outOfStockCategories.push(cat);
               item.innerHTML = `
-                <span class="cb-builder-selected-item-name">
-                  ${cat}: <span class="cb-out-of-stock-label">OUT OF STOCK</span>
-                </span>
-                <span class="cb-builder-selected-item-price">Unavailable</span>
-              `;
+                      <span class="cb-builder-selected-item-name">
+                        ${cat}: <span class="cb-out-of-stock-label">OUT OF STOCK</span>
+                      </span>
+                      <span class="cb-builder-selected-item-price">Unavailable</span>
+                    `;
             } else {
               item.innerHTML = `
-                <span class="cb-builder-selected-item-name">${cat}</span>
-                <span class="cb-builder-selected-item-price">Not selected</span>
-              `;
+                      <span class="cb-builder-selected-item-name">${cat}</span>
+                      <span class="cb-builder-selected-item-price">Not selected</span>
+                    `;
             }
           }
           list.appendChild(item);
@@ -892,12 +910,12 @@
           addButton.disabled = true;
           compatBox.className = "cb-builder-compatibility cb-incompatible";
           compatBox.innerHTML = `
-            <div class="cb-builder-compatibility-icon">!</div>
-            <div>
-              <strong>Incompatible components</strong>
-              <p>Unsafe combination. Choose compatible parts.</p>
-            </div>
-          `;
+                  <div class="cb-builder-compatibility-icon">!</div>
+                  <div>
+                    <strong>Incompatible components</strong>
+                    <p>Unsafe combination. Choose compatible parts.</p>
+                  </div>
+                `;
           document.getElementById("cbTotal").textContent =
             `R${total.toFixed(2)}`;
           return;
@@ -913,18 +931,18 @@
           addButton.disabled = true;
           compatBox.className = "cb-builder-compatibility";
           compatBox.innerHTML = `
-            <div class="cb-builder-compatibility-icon">⏳</div>
-            <div>
-              <strong>Pending compatibility check</strong>
-              <p>
-                  We check compatibility between
-                  <strong style="display: inline;">Frame + Fork</strong>
-                  and
-                  <strong style="display: inline;">Tires + Wheels</strong>
-                  for a safe, reliable build.
-                </p>
-            </div>
-          `;
+                  <div class="cb-builder-compatibility-icon"></div>
+                  <div>
+                    <strong>Pending compatibility check</strong>
+                    <p>
+                        We check compatibility between
+                        <strong style="display: inline;">Frame + Fork</strong>
+                        and
+                        <strong style="display: inline;">Tires + Wheels</strong>
+                        for a safe, reliable build.
+                      </p>
+                  </div>
+                `;
           return;
         }
 
@@ -932,28 +950,45 @@
         addButton.disabled = true;
         compatBox.className = "cb-builder-compatibility cb-checking";
         compatBox.innerHTML = `
-          <div class="cb-builder-compatibility-icon">⏳</div>
-          <div>
-            <strong>Checking compatibility...</strong>
-            <p>Verifying Frame + Fork and Tires + Wheels.</p>
-          </div>
-        `;
+                <div class="cb-builder-compatibility-icon"></div>
+                <div>
+                  <strong>Checking compatibility...</strong>
+                  <p>Verifying Frame + Fork and Tires + Wheels.</p>
+                </div>
+              `;
 
         const result = await checkBackendCompatibility();
 
         if (result.compatible === false) {
-          errorLabel.innerHTML = `❌ <strong>Compatibility issue:</strong> ${result.reason}`;
+          const reasonsHtml = result.reasons
+            .map((reason) => `<div> ${reason}</div>`)
+            .join("");
+          errorLabel.innerHTML = `<strong>Compatibility issues:</strong><br>${reasonsHtml}`;
           errorLabel.classList.add("show");
           addButton.classList.remove("show");
           addButton.disabled = true;
           compatBox.className = "cb-builder-compatibility cb-incompatible";
           compatBox.innerHTML = `
-            <div class="cb-builder-compatibility-icon">!</div>
-            <div>
-              <strong>Incompatible components</strong>
-              <p>Please review your selection.</p>
-            </div>
+              <div class="cb-builder-compatibility-icon">!</div>
+              <div>
+                  <strong>Incompatible components</strong>
+                  <p>Please review your selection.</p>
+              </div>
           `;
+          return;
+
+          errorLabel.innerHTML = `<strong>Compatibility issue:</strong> ${result.reason}`;
+          errorLabel.classList.add("show");
+          addButton.classList.remove("show");
+          addButton.disabled = true;
+          compatBox.className = "cb-builder-compatibility cb-incompatible";
+          compatBox.innerHTML = `
+                  <div class="cb-builder-compatibility-icon">!</div>
+                  <div>
+                    <strong>Incompatible components</strong>
+                    <p>Please review your selection.</p>
+                  </div>
+                `;
           return;
         }
 
@@ -963,12 +998,12 @@
         addButton.disabled = false;
         compatBox.className = "cb-builder-compatibility";
         compatBox.innerHTML = `
-          <div class="cb-builder-compatibility-icon">✓</div>
-          <div>
-            <strong>Components are compatible</strong>
-            <p>No compatibility issues found.</p>
-          </div>
-        `;
+                <div class="cb-builder-compatibility-icon">✓</div>
+                <div>
+                  <strong>Components are compatible</strong>
+                  <p>No compatibility issues found.</p>
+                </div>
+              `;
       }
 
       // Handle the Add to Cart button click
@@ -1061,6 +1096,9 @@
               viewCartBtn,
               addButton.nextSibling,
             );
+
+            // Mark that current selection is in the cart
+            cartAdded = true;
           } catch (error) {
             document.getElementById("cartMessage").textContent =
               "Failed to add to cart: " + error.message;

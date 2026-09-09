@@ -42,6 +42,28 @@
         background: #2f5a4c;
       }
 
+      /* message box */
+      .message {
+        padding: 10px 14px;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 500;
+        display: none;
+        margin-bottom: 15px;
+      }
+      .message.success {
+        display: block;
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+      }
+      .message.error {
+        display: block;
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+      }
+
       /* Filter styles */
       .filter-section {
         background: #fff;
@@ -320,6 +342,8 @@
           </button>
         </div>
 
+        <div id="componentMessage" class="message"></div>
+
         <div class="filter-section">
           <div class="filter-group">
             <select id="filterCategory">
@@ -468,6 +492,17 @@
 
       const API_BASE = "https://custom-bicycle-system-backend.onrender.com/api";
 
+      // show inline message
+      function showMessage(text, type) {
+        const el = document.getElementById("componentMessage");
+        el.textContent = text;
+        el.className = "message " + type;
+        setTimeout(() => {
+          el.className = "message";
+          el.textContent = "";
+        }, 4000);
+      }
+
       // Fetch with auth token attached
       function fetchWithAuth(endpoint, options = {}) {
         return fetch(`${API_BASE}${endpoint}`, {
@@ -507,32 +542,22 @@
 
         filteredComponents = allComponents.filter((comp) => {
           let match = true;
-
           if (category) {
             match = match && comp.category === category;
           }
-
           if (status) {
             const stock = parseInt(comp.stockQuantity) || 0;
-            if (status === "in-stock") {
-              match = match && stock >= 10;
-            } else if (status === "low-stock") {
+            if (status === "in-stock") match = match && stock >= 10;
+            else if (status === "low-stock")
               match = match && stock > 0 && stock < 10;
-            } else if (status === "out-of-stock") {
-              match = match && stock === 0;
-            }
+            else if (status === "out-of-stock") match = match && stock === 0;
           }
-
           if (priceRange) {
             const [min, max] = priceRange.split("-").map(Number);
             const price = Number(comp.unitPrice);
-            if (max === 99999) {
-              match = match && price >= min;
-            } else {
-              match = match && price >= min && price <= max;
-            }
+            if (max === 99999) match = match && price >= min;
+            else match = match && price >= min && price <= max;
           }
-
           return match;
         });
 
@@ -573,7 +598,6 @@
               statusText = "Low Stock";
             }
 
-            // Handle image URL (Cloudinary or local placeholder)
             let imageHtml;
             if (comp.image_url && comp.image_url.startsWith("http")) {
               imageHtml = `<img src="${comp.image_url}" class="thumbnail" onerror="this.parentElement.innerHTML='<div class=\'thumbnail-placeholder\'>No img</div>'" />`;
@@ -584,23 +608,23 @@
             }
 
             return `
-              <tr>
-                <td>${imageHtml}</td>
-                <td>${comp.id}</td>
-                <td><strong>${comp.name}</strong></td>
-                <td><span style="color:#3f705f;font-weight:600;">${comp.category || "General"}</span></td>
-                <td>${comp.description || "-"}</td>
-                <td>R${Number(comp.unitPrice).toFixed(2)}</td>
-                <td>${comp.stockQuantity}</td>
-                <td><span class="status-badge ${status}">${statusText}</span></td>
-                <td>
-                  <div class="actions">
-                    <button class="btn-edit" onclick="editComponent(${comp.id})"><i class="fas fa-edit"></i></button>
-                    <button class="btn-delete" onclick="deleteComponent(${comp.id}, '${comp.name.replace(/'/g, "\\'")}')"><i class="fas fa-trash"></i></button>
-                  </div>
-                </td>
-              </tr>
-            `;
+            <tr>
+              <td>${imageHtml}</td>
+              <td>${comp.id}</td>
+              <td><strong>${comp.name}</strong></td>
+              <td><span style="color:#3f705f;font-weight:600;">${comp.category || "General"}</span></td>
+              <td>${comp.description || "-"}</td>
+              <td>R${Number(comp.unitPrice).toFixed(2)}</td>
+              <td>${comp.stockQuantity}</td>
+              <td><span class="status-badge ${status}">${statusText}</span></td>
+              <td>
+                <div class="actions">
+                  <button class="btn-edit" onclick="editComponent(${comp.id})"><i class="fas fa-edit"></i></button>
+                  <button class="btn-delete" onclick="deleteComponent(${comp.id}, '${comp.name.replace(/'/g, "\\'")}')"><i class="fas fa-trash"></i></button>
+                </div>
+              </td>
+            </tr>
+          `;
           })
           .join("");
       }
@@ -655,12 +679,10 @@
             comp.category || "General";
           document.getElementById("saveBtn").textContent = "Update Component";
 
-          // Disable name field while editing
           document.getElementById("compName").setAttribute("readonly", true);
           document.getElementById("compName").style.backgroundColor = "#f1f3f5";
           document.getElementById("compName").style.cursor = "not-allowed";
 
-          // Disable category dropdown while editing
           document
             .getElementById("compCategory")
             .setAttribute("disabled", true);
@@ -668,7 +690,6 @@
             "#f1f3f5";
           document.getElementById("compCategory").style.cursor = "not-allowed";
 
-          // Show current image filename
           const display = document.getElementById("currentImageDisplay");
           if (comp.image_url) {
             const filename = comp.image_url.split("/").pop();
@@ -679,7 +700,7 @@
 
           document.getElementById("componentModal").classList.add("active");
         } catch (error) {
-          alert("Error: " + error.message);
+          showMessage("Error: " + error.message, "error");
         }
       }
 
@@ -709,10 +730,11 @@
           .then(() => {
             closeDelete();
             loadComponents();
+            showMessage("Component deleted successfully.", "success");
           })
           .catch((err) => {
-            alert("Delete failed: " + err.message);
             closeDelete();
+            showMessage("Delete failed: " + err.message, "error");
           });
       }
 
@@ -765,8 +787,9 @@
             }
             closeModal();
             loadComponents();
+            showMessage("Component saved successfully.", "success");
           } catch (error) {
-            alert("Error: " + error.message);
+            showMessage("Error: " + error.message, "error");
           }
         });
 
