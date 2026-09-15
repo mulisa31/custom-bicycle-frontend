@@ -414,12 +414,8 @@
             let updateCell = "";
             if (status === "pending") {
               updateCell = `
-                <select class="status-select" data-id="${order.id}">
-                  <option value="pending" selected>Pending</option>
-                  <option value="assembling">Assembling</option>
-                </select>
-                <button class="btn-save" onclick="updateStatus(${order.id})">Save</button>
-              `;
+          <button class="btn-save" onclick="updateStatus(${order.id})">Assemble</button>
+           `;
             } else if (status === "ready") {
               updateCell = `
                 <button class="btn-ship" onclick="markShipped(${order.id})">Mark Shipped</button>
@@ -468,13 +464,11 @@
         renderOrders(filteredOrders);
       }
 
-      // Update order status (pending -> assembling)
+      // Update order status
+      //  pending -> assembling
+
       async function updateStatus(orderId) {
-        const select = document.querySelector(
-          `.status-select[data-id="${orderId}"]`,
-        );
-        if (!select) return;
-        const newStatus = select.value;
+        const newStatus = "assembling";
 
         try {
           await fetchWithAuth(`/orders/${orderId}/status`, {
