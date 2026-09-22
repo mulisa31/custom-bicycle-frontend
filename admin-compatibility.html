@@ -176,6 +176,22 @@
         color: #1a2634;
       }
 
+      .modal-hint {
+        margin: 0.6rem 0 0.4rem;
+        padding: 10px 12px;
+        background: #eef3ef;
+        border-left: 3px solid #3f705f;
+        border-radius: 6px;
+        font-size: 0.82rem;
+        line-height: 1.55;
+        color: #4a5a53;
+      }
+
+      .modal-hint i {
+        color: #3f705f;
+        margin-right: 4px;
+      }
+
       .modal-content label {
         display: block;
         margin: 0.8rem 0 0.3rem;
@@ -353,6 +369,14 @@
     <div class="modal" id="ruleModal">
       <div class="modal-content">
         <h2 id="modalTitle">Add Compatibility Rule</h2>
+
+        <p class="modal-hint">
+          <i class="fas fa-info-circle"></i>
+          Rules can only be created between a <strong>Frame</strong> and a
+          <strong>Fork</strong>, or between <strong>Tires</strong> and
+          <strong>Wheels</strong>.
+        </p>
+
         <form id="ruleForm">
           <input type="hidden" id="ruleId" />
 
@@ -397,7 +421,16 @@
       let allRules = [];
       let deleteRuleId = null;
 
-      // only admin can use this page
+      // only these category pairs can have a rule
+      const COMPATIBILITY_PAIRS = {
+        Frame: "Fork",
+        Fork: "Frame",
+        Tires: "Wheels",
+        Wheels: "Tires",
+      };
+      const ALLOWED_CATEGORIES = ["Frame", "Fork", "Tires", "Wheels"];
+
+      // read user from storage
       try {
         user = JSON.parse(localStorage.getItem("user"));
         if (user && user.user && typeof user.user === "object") {
@@ -407,11 +440,12 @@
         user = null;
       }
 
+      // admin only
       if (!token || !user || user.role !== "admin") {
         window.location.href = "login.html";
       }
 
-      // small popup for errors
+      // error popup
       function showError(title, message) {
         const existing = document.getElementById("customErrorPopup");
         if (existing) existing.remove();
@@ -441,6 +475,7 @@
         if (errorDiv) errorDiv.remove();
       }
 
+      // fetch wrapper that adds token + parses json
       async function fetchWithAuth(endpoint, options = {}) {
         const response = await fetch(`${API_BASE}${endpoint}`, {
           ...options,
@@ -471,6 +506,91 @@
         return data;
       }
 
+      function getComponentById(id) {
+        return allComponents.find((c) => Number(c.id) === Number(id)) || null;
+      }
+
+      function getCategoryOfComponent(id) {
+        const comp = getComponentById(id);
+        return comp ? comp.category : null;
+      }
+
+      // build options grouped by category
+      function buildComponentOptions(categories) {
+        let html = '<option value="">Select Component</option>';
+
+        categories.forEach((cat) => {
+          const comps = allComponents.filter((c) => c.category === cat);
+
+          if (comps.length === 0) {
+            html += `<option value="" disabled>No ${cat} components available</option>`;
+            return;
+          }
+
+          html += `<optgroup label="${cat}">`;
+          comps.forEach((comp) => {
+            html += `<option value="${comp.id}">${comp.name}</option>`;
+          });
+          html += `</optgroup>`;
+        });
+
+        return html;
+      }
+
+      function fillComponentSelect(selectEl, categories, keepValue = "") {
+        if (!selectEl) return;
+        selectEl.innerHTML = buildComponentOptions(categories);
+        selectEl.value = keepValue;
+      }
+
+      // keep the two dropdowns in sync
+      function refreshComponentDropdowns(changed) {
+        const compA = document.getElementById("compA");
+        const compB = document.getElementById("compB");
+        if (!compA || !compB) return;
+
+        if (changed === "B") {
+          const catB = getCategoryOfComponent(compB.value);
+
+          if (catB && COMPATIBILITY_PAIRS[catB]) {
+            const partnerCat = COMPATIBILITY_PAIRS[catB];
+            const catA = getCategoryOfComponent(compA.value);
+            fillComponentSelect(
+              compA,
+              [partnerCat],
+              catA === partnerCat ? compA.value : "",
+            );
+          } else {
+            fillComponentSelect(compA, ALLOWED_CATEGORIES, compA.value);
+          }
+          return;
+        }
+
+        const catA = getCategoryOfComponent(compA.value);
+
+        if (catA && COMPATIBILITY_PAIRS[catA]) {
+          const partnerCat = COMPATIBILITY_PAIRS[catA];
+          const catB = getCategoryOfComponent(compB.value);
+          fillComponentSelect(
+            compB,
+            [partnerCat],
+            catB === partnerCat ? compB.value : "",
+          );
+        } else {
+          fillComponentSelect(compB, ALLOWED_CATEGORIES, compB.value);
+        }
+      }
+
+      function initialiseDropdowns() {
+        const compA = document.getElementById("compA");
+        const compB = document.getElementById("compB");
+        if (!compA || !compB) return;
+
+        fillComponentSelect(compA, ALLOWED_CATEGORIES, "");
+        fillComponentSelect(compB, ALLOWED_CATEGORIES, "");
+      }
+
+      // load components then fill dropdowns
       async function loadComponents() {
         try {
           const response = await fetchWithAuth("/components");
@@ -478,7 +598,8 @@
           else if (Array.isArray(response.components))
             allComponents = response.components;
           else allComponents = [];
-          populateDropdowns();
+
+          initialiseDropdowns();
         } catch (error) {
           console.error("Failed to load components:", error);
           showError(
@@ -488,27 +609,7 @@
         }
       }
 
-      function populateDropdowns() {
-        const compA = document.getElementById("compA");
-        const compB = document.getElementById("compB");
-        if (!compA || !compB) return;
-
-        compA.innerHTML = '<option value="">Select Component</option>';
-        compB.innerHTML = '<option value="">Select Component</option>';
-
-        allComponents.forEach((component) => {
-          const optionA = document.createElement("option");
-          optionA.value = component.id;
-          optionA.textContent = component.name;
-          compA.appendChild(optionA);
-
-          const optionB = document.createElement("option");
-          optionB.value = component.id;
-          optionB.textContent = component.name;
-          compB.appendChild(optionB);
-        });
-      }
-
+      // load all rules
       async function loadRules() {
         const tbody = document.getElementById("rulesBody");
         tbody.innerHTML = `<tr><td colspan="5" class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> Loading...</td></tr>`;
@@ -525,6 +626,7 @@
         }
       }
 
+      // render the table rows
       function displayRules() {
         const tbody = document.getElementById("rulesBody");
         if (!allRules.length) {
@@ -561,6 +663,7 @@
           .join("");
       }
 
+      // check for a duplicate rule (either order)
       function findExistingRule(componentAId, componentBId, excludeId = null) {
         return allRules.find((rule) => {
           if (excludeId !== null && Number(rule.id) === Number(excludeId))
@@ -575,23 +678,27 @@
         });
       }
 
+      // reset and open modal for adding
       function openAddModal() {
         document.getElementById("modalTitle").textContent =
           "Add Compatibility Rule";
         document.getElementById("ruleForm").reset();
         document.getElementById("ruleId").value = "";
         document.getElementById("saveBtn").textContent = "Save Rule";
-        document.getElementById("compA").value = "";
-        document.getElementById("compB").value = "";
         document.getElementById("compatible").value = "true";
+
+        initialiseDropdowns();
+
         delete document.getElementById("ruleForm").dataset.originalA;
         delete document.getElementById("ruleForm").dataset.originalB;
         delete document.getElementById("ruleForm").dataset.originalCompatible;
-        document.getElementById("ruleModal").classList.add("active");
+
         document.getElementById("compA").disabled = false;
         document.getElementById("compB").disabled = false;
+        document.getElementById("ruleModal").classList.add("active");
       }
 
+      // open modal pre-filled for editing
       async function editRule(id) {
         try {
           let rule = allRules.find((item) => Number(item.id) === Number(id));
@@ -612,18 +719,35 @@
           }
 
           const form = document.getElementById("ruleForm");
-          document.getElementById("compA").disabled = true;
-          document.getElementById("compB").disabled = true;
+          const compA = document.getElementById("compA");
+          const compB = document.getElementById("compB");
 
+          // remember original values so we can detect "no changes"
           form.dataset.originalA = rule.componentAId;
           form.dataset.originalB = rule.componentBId;
           form.dataset.originalCompatible = String(Boolean(rule.compatible));
 
+          const catA = getCategoryOfComponent(rule.componentAId);
+          const catB = getCategoryOfComponent(rule.componentBId);
+
+          fillComponentSelect(
+            compA,
+            catA ? [catA] : ALLOWED_CATEGORIES,
+            rule.componentAId,
+          );
+          fillComponentSelect(
+            compB,
+            catB ? [catB] : ALLOWED_CATEGORIES,
+            rule.componentBId,
+          );
+
+          // lock the selects in edit mode
+          compA.disabled = true;
+          compB.disabled = true;
+
           document.getElementById("modalTitle").textContent =
             "Edit Compatibility Rule";
           document.getElementById("ruleId").value = rule.id;
-          document.getElementById("compA").value = rule.componentAId;
-          document.getElementById("compB").value = rule.componentBId;
           document.getElementById("compatible").value = rule.compatible
             ? "true"
             : "false";
@@ -642,6 +766,7 @@
         document.getElementById("ruleModal").classList.remove("active");
       }
 
+      // ask before deleting
       function deleteRule(id) {
         const rule = allRules.find((item) => Number(item.id) === Number(id));
         deleteRuleId = id;
@@ -685,6 +810,15 @@
         }
       }
 
+      document.getElementById("compA").addEventListener("change", function () {
+        refreshComponentDropdowns("A");
+      });
+
+      document.getElementById("compB").addEventListener("change", function () {
+        refreshComponentDropdowns("B");
+      });
+
+      // save (add or update)
       document
         .getElementById("ruleForm")
         .addEventListener("submit", async function (event) {
@@ -712,6 +846,22 @@
             return;
           }
 
+          const catA = getCategoryOfComponent(componentAId);
+          const catB = getCategoryOfComponent(componentBId);
+
+          // only frame+fork or tires+wheels allowed
+          if (
+            !COMPATIBILITY_PAIRS[catA] ||
+            COMPATIBILITY_PAIRS[catA] !== catB
+          ) {
+            showError(
+              "Invalid Component Pair",
+              "Compatibility rules can only be created between a Frame and a Fork, or between Tires and Wheels.",
+            );
+            return;
+          }
+
+          // update path
           if (id) {
             const form = document.getElementById("ruleForm");
             const originalA = Number(form.dataset.originalA);
@@ -773,6 +923,7 @@
             return;
           }
 
+          // add path - check duplicates first
           const duplicateRule = findExistingRule(componentAId, componentBId);
           if (duplicateRule) {
             const componentA = allComponents.find(
@@ -812,6 +963,7 @@
           }
         });
 
+      // click outside to close
       document
         .getElementById("ruleModal")
         .addEventListener("click", function (event) {
@@ -824,6 +976,7 @@
           if (event.target === this) closeDeleteRule();
         });
 
+      // init
       document.addEventListener("DOMContentLoaded", async function () {
         await loadComponents();
         await loadRules();

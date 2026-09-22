@@ -1,7 +1,10 @@
 // Menu show/hide functionality
 
 
-// Image gallery: clicking small images changes the main product image
+// Warm up the backend so the first real request isn't slow.
+fetch("https://custom-bicycle-system-backend.onrender.com/api/health").catch(() => {});
+
+// Image gallery, changes the main product image to be reduced
 function imgGallery() {
   const mainImg = document.querySelector(".details__img"),
     smallImg = document.querySelectorAll(".details__small-img");
@@ -67,69 +70,4 @@ tabs.forEach((tab) => {
 
     tab.classList.add("active-tab");
   });
-});
-
-// update the cart badge number in the header
-window.updateCartBadge = async function () {
-  const badge = document.getElementById("cart-badge");
-
-  // header hasn't loaded yet, skip
-  if (!badge) {
-    return;
-  }
-
-  const token = localStorage.getItem("token");
-
-  // user is not logged in, show zero
-  if (!token) {
-    badge.textContent = "0";
-    return;
-  }
-
-  try {
-    // use the  backend URL
-    const response = await fetch("https://custom-bicycle-system-backend.onrender.com/api/cart", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json"
-      }
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
-    }
-
-    const cart = await response.json();
-
-    // sum up the quantity of every item in the cart
-    const totalItems = cart.reduce((total, item) => {
-      return total + Number(item.quantity || 0);
-    }, 0);
-
-    badge.textContent = totalItems;
-
-  } catch (error) {
-    console.error("Could not load cart count:", error);
-    badge.textContent = "0";
-  }
-};
-
-// watch for the header to be inserted into the page, then update the badge
-const headerObserver = new MutationObserver(() => {
-  const badge = document.getElementById("cart-badge");
-
-  if (badge) {
-    window.updateCartBadge();
-    headerObserver.disconnect();
-  }
-});
-
-headerObserver.observe(document.body, {
-  childList: true,
-  subtree: true
-});
-
-// update badge again on full page load
-window.addEventListener("load", () => {
-  window.updateCartBadge();
 });
